@@ -5,7 +5,7 @@ import { useState } from 'react'
  * 
  * Professional landing page for the Photo Badge Designer
  */
-function LandingPage({ onGetStarted, onTrackOrder }) {
+function LandingPage({ onGetStarted, onTrackOrder, onTerms }) {
   const [hoveredFeature, setHoveredFeature] = useState(null)
 
   const features = [
@@ -383,9 +383,9 @@ function LandingPage({ onGetStarted, onTrackOrder }) {
             </div>
             
             <div className="flex items-center gap-6 text-sm text-badge-primary/60">
-              <a href="#" className="hover:text-badge-primary transition-colors">Terms</a>
+              <button onClick={onTerms} className="hover:text-badge-primary transition-colors">Terms</button>
               <a href="#" className="hover:text-badge-primary transition-colors">Privacy</a>
-              <a href="#" className="hover:text-badge-primary transition-colors">Contact</a>
+              <a href="mailto:support@daisyandson.com" className="hover:text-badge-primary transition-colors">Contact</a>
               <a href="#" className="hover:text-badge-primary transition-colors">FAQ</a>
             </div>
             
