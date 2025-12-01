@@ -163,19 +163,15 @@ function AdminDashboard({ onLogout }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-badge-cream">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <header className="bg-white/80 backdrop-blur-lg border-b border-badge-primary/10 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-badge-primary to-badge-secondary flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L13.09 8.26L20 9L14.14 13.14L16.18 20L12 16.27L7.82 20L9.86 13.14L4 9L10.91 8.26L12 2Z" />
-                </svg>
-              </div>
+              <img src="/images/ds_logo.png" alt="Daisy & Son Co." className="h-12 w-auto" />
               <div>
-                <h1 className="font-display text-xl font-bold text-badge-primary">Admin Dashboard</h1>
+                <h1 className="font-display text-xl font-semibold text-badge-primary">Admin Dashboard</h1>
                 <p className="text-xs text-badge-primary/60">Manage orders & printing</p>
               </div>
             </div>
@@ -204,25 +200,25 @@ function AdminDashboard({ onLogout }) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <p className="text-sm text-gray-500">Total Orders</p>
-            <p className="text-2xl font-bold text-badge-primary">{orders.length}</p>
+          <div className="bg-white/80 backdrop-blur rounded-xl p-4 border border-badge-primary/10">
+            <p className="text-sm text-badge-primary/60">Total Orders</p>
+            <p className="text-2xl font-semibold text-badge-primary">{orders.length}</p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <p className="text-sm text-gray-500">Pending</p>
-            <p className="text-2xl font-bold text-amber-600">
+          <div className="bg-white/80 backdrop-blur rounded-xl p-4 border border-badge-primary/10">
+            <p className="text-sm text-badge-primary/60">Pending</p>
+            <p className="text-2xl font-semibold text-badge-secondary">
               {orders.filter(o => o.status === 'pending').length}
             </p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <p className="text-sm text-gray-500">In Progress</p>
-            <p className="text-2xl font-bold text-blue-600">
+          <div className="bg-white/80 backdrop-blur rounded-xl p-4 border border-badge-primary/10">
+            <p className="text-sm text-badge-primary/60">In Progress</p>
+            <p className="text-2xl font-semibold text-badge-leaf">
               {orders.filter(o => o.status === 'printing').length}
             </p>
           </div>
-          <div className="bg-white rounded-xl p-4 border border-gray-200">
-            <p className="text-sm text-gray-500">Completed</p>
-            <p className="text-2xl font-bold text-green-600">
+          <div className="bg-white/80 backdrop-blur rounded-xl p-4 border border-badge-primary/10">
+            <p className="text-sm text-badge-primary/60">Completed</p>
+            <p className="text-2xl font-semibold text-green-600">
               {orders.filter(o => o.status === 'completed').length}
             </p>
           </div>
@@ -232,45 +228,45 @@ function AdminDashboard({ onLogout }) {
         <div className="flex gap-2 mb-4">
           <button
             onClick={() => setCategoryFilter('all')}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
               categoryFilter === 'all'
                 ? 'bg-badge-primary text-white shadow-lg shadow-badge-primary/25'
-                : 'bg-white text-badge-primary/70 hover:bg-gray-50 border border-gray-200'
+                : 'bg-white/80 text-badge-primary/70 hover:bg-white border border-badge-primary/10'
             }`}
           >
             All Orders
             <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-              categoryFilter === 'all' ? 'bg-white/20' : 'bg-gray-100'
+              categoryFilter === 'all' ? 'bg-white/20' : 'bg-badge-primary/10'
             }`}>
               {orders.length}
             </span>
           </button>
           <button
             onClick={() => setCategoryFilter('personal')}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
               categoryFilter === 'personal'
-                ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/25'
-                : 'bg-white text-blue-600 hover:bg-blue-50 border border-blue-200'
+                ? 'bg-badge-leaf text-white shadow-lg shadow-badge-leaf/25'
+                : 'bg-white/80 text-badge-leaf hover:bg-white border border-badge-leaf/20'
             }`}
           >
             👤 Personal
             <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-              categoryFilter === 'personal' ? 'bg-white/20' : 'bg-blue-50'
+              categoryFilter === 'personal' ? 'bg-white/20' : 'bg-badge-leaf/10'
             }`}>
               {personalCount}
             </span>
           </button>
           <button
             onClick={() => setCategoryFilter('event')}
-            className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all ${
+            className={`px-5 py-2.5 rounded-xl text-sm font-medium transition-all ${
               categoryFilter === 'event'
-                ? 'bg-purple-500 text-white shadow-lg shadow-purple-500/25'
-                : 'bg-white text-purple-600 hover:bg-purple-50 border border-purple-200'
+                ? 'bg-badge-secondary text-white shadow-lg shadow-badge-secondary/25'
+                : 'bg-white/80 text-badge-secondary hover:bg-white border border-badge-secondary/20'
             }`}
           >
             🎉 Event
             <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${
-              categoryFilter === 'event' ? 'bg-white/20' : 'bg-purple-50'
+              categoryFilter === 'event' ? 'bg-white/20' : 'bg-badge-secondary/10'
             }`}>
               {eventCount}
             </span>
@@ -285,8 +281,8 @@ function AdminDashboard({ onLogout }) {
               onClick={() => setFilter(f)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                 filter === f 
-                  ? 'bg-gray-800 text-white' 
-                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                  ? 'bg-badge-primary text-white' 
+                  : 'bg-white/80 text-badge-primary/60 hover:bg-white border border-badge-primary/10'
               }`}
             >
               {f.charAt(0).toUpperCase() + f.slice(1)}
@@ -301,21 +297,21 @@ function AdminDashboard({ onLogout }) {
             <p className="text-badge-primary/60">Loading orders...</p>
           </div>
         ) : filteredOrders.length === 0 ? (
-          <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="text-center py-12 bg-white/80 backdrop-blur rounded-xl border border-badge-primary/10">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-badge-primary/10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-badge-primary/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
               </svg>
             </div>
-            <p className="text-gray-500">No orders yet</p>
-            <p className="text-gray-400 text-sm mt-1">Orders will appear here when customers complete purchases</p>
+            <p className="text-badge-primary/70">No orders yet</p>
+            <p className="text-badge-primary/50 text-sm mt-1">Orders will appear here when customers complete purchases</p>
           </div>
         ) : (
           <div className="space-y-4">
             {filteredOrders.map((order) => (
               <div 
                 key={order.id}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:shadow-md transition-shadow"
+                className="bg-white/80 backdrop-blur rounded-xl border border-badge-primary/10 overflow-hidden hover:shadow-md transition-shadow"
               >
                 <div className="p-4 sm:p-6">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -369,11 +365,11 @@ function AdminDashboard({ onLogout }) {
 
                       {/* Order Details */}
                       <div className="mt-3 flex items-center flex-wrap gap-2 text-sm">
-                        <span className="text-gray-700 font-medium">
+                        <span className="text-badge-primary font-medium">
                           {order.shipping?.name || order.payment?.payerName || 'Customer'}
                         </span>
                         {order.quantity && (
-                          <span className="bg-gray-100 text-gray-700 text-xs px-2 py-0.5 rounded font-medium">
+                          <span className="bg-badge-primary/10 text-badge-primary text-xs px-2 py-0.5 rounded font-medium">
                             {order.quantity} badge{order.quantity > 1 ? 's' : ''}
                           </span>
                         )}
@@ -385,8 +381,8 @@ function AdminDashboard({ onLogout }) {
                         {order.category && (
                           <span className={`text-xs px-2 py-0.5 rounded ${
                             order.category === 'personal' 
-                              ? 'bg-blue-50 text-blue-600' 
-                              : 'bg-purple-50 text-purple-600'
+                              ? 'bg-badge-leaf/10 text-badge-leaf' 
+                              : 'bg-badge-secondary/10 text-badge-secondary'
                           }`}>
                             {order.category === 'personal' ? '👤 Personal' : '🎉 Event'}
                           </span>
@@ -411,21 +407,21 @@ function AdminDashboard({ onLogout }) {
 
                       {/* Shipping Info */}
                       {order.shipping && (
-                        <div className="mt-3 pt-3 border-t border-gray-100">
+                        <div className="mt-3 pt-3 border-t border-badge-primary/10">
                           <div className="flex items-start gap-2">
-                            <svg className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <svg className="w-4 h-4 text-badge-primary/40 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
-                            <div className="text-xs text-gray-600 flex-grow">
-                              <p className="font-medium text-gray-800">{order.shipping.name}</p>
+                            <div className="text-xs text-badge-primary/70 flex-grow">
+                              <p className="font-medium text-badge-primary">{order.shipping.name}</p>
                               <p>{order.shipping.phone}</p>
                               <p>{order.shipping.address}, {order.shipping.city}</p>
                               {order.shipping.country && order.shipping.country !== 'AE' && (
-                                <p className="text-blue-600">🌍 International: {order.shipping.country}</p>
+                                <p className="text-badge-leaf">🌍 International: {order.shipping.country}</p>
                               )}
                               {order.shipping.notes && (
-                                <p className="text-gray-400 italic mt-1">Note: {order.shipping.notes}</p>
+                                <p className="text-badge-primary/50 italic mt-1">Note: {order.shipping.notes}</p>
                               )}
                               
                               {/* Aramex Tracking */}
