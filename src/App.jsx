@@ -247,20 +247,16 @@ function App() {
 
   // Designer page
   return (
-    <div className="min-h-screen bg-white py-8 px-4">
+    <div className="min-h-screen bg-badge-cream py-8 px-4">
       {/* Header */}
       <header className="max-w-7xl mx-auto mb-8">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <button 
               onClick={handleBackToHome}
-              className="w-12 h-12 rounded-full bg-gradient-to-br from-badge-primary to-badge-secondary p-0.5 hover:scale-105 transition-transform"
+              className="hover:scale-105 transition-transform"
             >
-              <div className="w-full h-full rounded-full bg-white flex items-center justify-center">
-                <svg className="w-6 h-6 text-badge-primary" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L13.09 8.26L20 9L14.14 13.14L16.18 20L12 16.27L7.82 20L9.86 13.14L4 9L10.91 8.26L12 2Z" />
-                </svg>
-              </div>
+              <img src="/images/ds_logo.png" alt="Daisy & Son Co." className="h-12 w-auto" />
             </button>
             <div>
               <h1 className="font-display text-2xl font-bold text-gradient">Badge Designer</h1>
@@ -653,7 +649,7 @@ function App() {
       {/* Footer */}
       <footer className="max-w-7xl mx-auto mt-12 pt-8 border-t border-badge-primary/10">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-badge-primary/50">
-          <p>© 2024 BadgePin. High-quality 58mm custom badges.</p>
+          <p>© 2025 Daisy & Son Co. All Rights Reserved.</p>
           <div className="flex items-center gap-4">
             <a href="#" className="hover:text-badge-primary transition-colors">Terms</a>
             <a href="#" className="hover:text-badge-primary transition-colors">Privacy</a>

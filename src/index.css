@@ -9,7 +9,7 @@
   }
   
   body {
-    @apply font-body bg-white text-badge-primary antialiased;
+    @apply font-body bg-badge-cream text-badge-primary antialiased;
     min-height: 100vh;
   }
 
@@ -20,61 +20,61 @@
   }
 
   ::-webkit-scrollbar-track {
-    background: rgba(68, 85, 203, 0.1);
+    background: rgba(61, 90, 90, 0.1);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb {
-    background: rgba(68, 85, 203, 0.4);
+    background: rgba(201, 168, 108, 0.6);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: rgba(68, 85, 203, 0.6);
+    background: rgba(201, 168, 108, 0.8);
   }
 }
 
 @layer components {
   /* Card with soft shadow */
   .glass-card {
-    @apply bg-white/80 backdrop-blur-xl border border-badge-primary/10 rounded-2xl;
+    @apply bg-white/90 backdrop-blur-xl border border-badge-primary/10 rounded-2xl;
     box-shadow: 
-      0 4px 24px rgba(68, 85, 203, 0.08),
-      0 1px 3px rgba(68, 85, 203, 0.05);
+      0 4px 24px rgba(61, 90, 90, 0.08),
+      0 1px 3px rgba(61, 90, 90, 0.05);
   }
 
   /* Badge preview container */
   .badge-container {
     @apply relative rounded-full overflow-hidden;
     box-shadow: 
-      0 0 0 4px rgba(68, 85, 203, 0.3),
-      0 8px 32px rgba(68, 85, 203, 0.2),
-      inset 0 2px 10px rgba(68, 85, 203, 0.1);
+      0 0 0 4px rgba(201, 168, 108, 0.4),
+      0 8px 32px rgba(61, 90, 90, 0.2),
+      inset 0 2px 10px rgba(61, 90, 90, 0.1);
   }
 
   /* Action button styles */
   .btn-primary {
-    @apply px-6 py-3 bg-gradient-to-r from-badge-primary to-indigo-500 
+    @apply px-6 py-3 bg-gradient-to-r from-badge-primary to-badge-leaf 
            text-white font-semibold rounded-xl
-           hover:from-indigo-600 hover:to-badge-primary
+           hover:from-badge-leaf hover:to-badge-primary
            active:scale-[0.98] transition-all duration-200
            shadow-lg shadow-badge-primary/25
            disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply px-6 py-3 bg-badge-beige/50 border border-badge-secondary/20
-           text-badge-secondary font-medium rounded-xl
-           hover:bg-badge-secondary/10 hover:border-badge-secondary/40
+    @apply px-6 py-3 bg-badge-beige/50 border border-badge-primary/20
+           text-badge-primary font-medium rounded-xl
+           hover:bg-badge-primary/10 hover:border-badge-primary/40
            active:scale-[0.98] transition-all duration-200;
   }
 
   .btn-gold {
-    @apply px-6 py-3 bg-gradient-to-r from-badge-secondary to-amber-600 
+    @apply px-6 py-3 bg-gradient-to-r from-badge-secondary to-amber-500 
            text-white font-bold rounded-xl
-           hover:from-amber-600 hover:to-badge-secondary
+           hover:from-amber-500 hover:to-badge-secondary
            active:scale-[0.98] transition-all duration-200
-           shadow-lg shadow-badge-secondary/25;
+           shadow-lg shadow-badge-secondary/30;
   }
 
   /* Input styles */
@@ -91,13 +91,13 @@
   }
 
   .slider-track::-webkit-slider-thumb {
-    @apply appearance-none w-5 h-5 bg-gradient-to-r from-badge-primary to-indigo-500 
+    @apply appearance-none w-5 h-5 bg-gradient-to-r from-badge-primary to-badge-leaf 
            rounded-full cursor-pointer shadow-lg;
-    box-shadow: 0 0 10px rgba(68, 85, 203, 0.4);
+    box-shadow: 0 0 10px rgba(61, 90, 90, 0.4);
   }
 
   .slider-track::-moz-range-thumb {
-    @apply w-5 h-5 bg-gradient-to-r from-badge-primary to-indigo-500 
+    @apply w-5 h-5 bg-gradient-to-r from-badge-primary to-badge-leaf 
            rounded-full cursor-pointer border-0;
   }
 
@@ -117,7 +117,7 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(68, 85, 203, 0.15) 50%,
+      rgba(201, 168, 108, 0.2) 50%,
       transparent 100%
     );
     background-size: 200% 100%;

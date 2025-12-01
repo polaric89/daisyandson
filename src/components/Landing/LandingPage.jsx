@@ -55,18 +55,14 @@ function LandingPage({ onGetStarted, onTrackOrder }) {
   ]
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-badge-cream">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-badge-primary/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-badge-primary to-badge-secondary flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L13.09 8.26L20 9L14.14 13.14L16.18 20L12 16.27L7.82 20L9.86 13.14L4 9L10.91 8.26L12 2Z" />
-                </svg>
-              </div>
-              <span className="font-display text-xl font-bold text-badge-primary">BadgePin</span>
+              <img src="/images/ds_logo.png" alt="Daisy & Son Co." className="h-12 w-auto" />
+              <h1 className="font-display text-2xl font-bold text-gradient">Daisy & Son Co.</h1>
             </div>
             <div className="flex items-center gap-3">
               <button 
@@ -129,30 +125,6 @@ function LandingPage({ onGetStarted, onTrackOrder }) {
                 </button>
               </div>
               
-              {/* Trust badges */}
-              <div className="flex items-center gap-6 mt-10 justify-center lg:justify-start">
-                <div className="flex -space-x-2">
-                  {[1, 2, 3, 4, 5].map((i) => (
-                    <div 
-                      key={i} 
-                      className="w-10 h-10 rounded-full bg-gradient-to-br from-badge-beige to-badge-rose border-2 border-white"
-                      style={{ 
-                        backgroundImage: `linear-gradient(${45 * i}deg, #e6cfbc, #d09892)` 
-                      }}
-                    />
-                  ))}
-                </div>
-                <div className="text-left">
-                  <div className="flex items-center gap-1">
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <svg key={i} className="w-4 h-4 text-badge-secondary" fill="currentColor" viewBox="0 0 20 20">
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                  </div>
-                  <p className="text-sm text-badge-primary/60">2,500+ happy customers</p>
-                </div>
-              </div>
             </div>
             
             {/* Right: Hero Image/Badge Preview */}
@@ -162,7 +134,7 @@ function LandingPage({ onGetStarted, onTrackOrder }) {
                 {/* Main badge */}
                 <div className="w-72 h-72 sm:w-80 sm:h-80 mx-auto rounded-full bg-gradient-to-br from-badge-beige to-badge-rose shadow-2xl flex items-center justify-center"
                   style={{
-                    boxShadow: '0 0 0 8px rgba(68, 85, 203, 0.2), 0 25px 50px rgba(68, 85, 203, 0.15)'
+                    boxShadow: '0 0 0 8px rgba(201, 168, 108, 0.4), 0 25px 50px rgba(61, 90, 90, 0.15)'
                   }}
                 >
                   <div className="w-64 h-64 sm:w-72 sm:h-72 rounded-full bg-gradient-to-br from-white to-badge-cream flex items-center justify-center">
@@ -179,13 +151,13 @@ function LandingPage({ onGetStarted, onTrackOrder }) {
                 </div>
                 
                 {/* Floating badges */}
-                <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-gradient-to-br from-badge-secondary to-amber-500 shadow-lg animate-float"
+                <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-gradient-to-br from-badge-secondary to-amber-400 shadow-lg animate-float"
                   style={{ animationDelay: '0s' }}
                 />
-                <div className="absolute bottom-8 -left-8 w-16 h-16 rounded-full bg-gradient-to-br from-badge-primary to-indigo-400 shadow-lg animate-float"
+                <div className="absolute bottom-8 -left-8 w-16 h-16 rounded-full bg-gradient-to-br from-badge-primary to-badge-leaf shadow-lg animate-float"
                   style={{ animationDelay: '1s' }}
                 />
-                <div className="absolute top-1/2 -right-12 w-12 h-12 rounded-full bg-gradient-to-br from-badge-rose to-pink-400 shadow-lg animate-float"
+                <div className="absolute top-1/2 -right-12 w-12 h-12 rounded-full bg-gradient-to-br from-badge-rose to-badge-beige shadow-lg animate-float"
                   style={{ animationDelay: '2s' }}
                 />
               </div>
@@ -195,11 +167,11 @@ function LandingPage({ onGetStarted, onTrackOrder }) {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-white to-badge-cream/30">
+      <section className="py-20 px-4 bg-gradient-to-b from-badge-cream to-badge-beige/30">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-badge-primary mb-4">
-              Why Choose BadgePin?
+              Why Choose Daisy & Son Co.?
             </h2>
             <p className="text-badge-primary/60 max-w-2xl mx-auto">
               We make it incredibly easy to create professional-quality badges from your photos
@@ -252,7 +224,7 @@ function LandingPage({ onGetStarted, onTrackOrder }) {
                   <div className="hidden lg:block absolute top-8 left-1/2 w-full h-0.5 bg-gradient-to-r from-badge-primary/20 to-badge-primary/20" />
                 )}
                 <div className="relative z-10">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-badge-primary to-indigo-500 text-white font-display text-xl font-bold flex items-center justify-center shadow-lg">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-to-br from-badge-primary to-badge-leaf text-white font-display text-xl font-bold flex items-center justify-center shadow-lg">
                     {step.num}
                   </div>
                   <h3 className="font-display text-xl font-semibold text-badge-primary mb-2">
@@ -269,7 +241,7 @@ function LandingPage({ onGetStarted, onTrackOrder }) {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20 px-4 bg-gradient-to-b from-badge-cream/30 to-white">
+      <section className="py-20 px-4 bg-gradient-to-b from-badge-beige/30 to-badge-cream">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="font-display text-3xl sm:text-4xl font-bold text-badge-primary mb-4">
@@ -375,7 +347,7 @@ function LandingPage({ onGetStarted, onTrackOrder }) {
       {/* CTA Section */}
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
-            <div className="bg-gradient-to-r from-badge-primary to-indigo-600 rounded-3xl p-12 text-white relative overflow-hidden">
+            <div className="bg-gradient-to-r from-badge-primary to-badge-leaf rounded-3xl p-12 text-white relative overflow-hidden">
               <div className="absolute inset-0 opacity-20" style={{
                 backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.15) 1px, transparent 1px)',
                 backgroundSize: '20px 20px'
@@ -406,12 +378,8 @@ function LandingPage({ onGetStarted, onTrackOrder }) {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-badge-primary to-badge-secondary flex items-center justify-center">
-                <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="currentColor">
-                  <path d="M12 2L13.09 8.26L20 9L14.14 13.14L16.18 20L12 16.27L7.82 20L9.86 13.14L4 9L10.91 8.26L12 2Z" />
-                </svg>
-              </div>
-              <span className="font-display text-lg font-bold text-badge-primary">BadgePin</span>
+              <img src="/images/ds_logo.png" alt="Daisy & Son Co." className="h-10 w-auto" />
+              <h1 className="font-display text-2xl font-bold text-gradient">Daisy & Son Co.</h1>
             </div>
             
             <div className="flex items-center gap-6 text-sm text-badge-primary/60">
@@ -422,7 +390,7 @@ function LandingPage({ onGetStarted, onTrackOrder }) {
             </div>
             
             <p className="text-sm text-badge-primary/40">
-              © 2024 BadgePin. All rights reserved.
+              © 2025 Daisy & Son Co. All rights reserved.
             </p>
           </div>
         </div>

@@ -55,15 +55,11 @@ function CategoryModal({ isOpen, onSelect, onClose }) {
       />
       
       {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="relative bg-badge-cream rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-200 border border-badge-primary/10">
         {/* Header */}
-        <div className="p-6 pb-4 text-center border-b border-gray-100">
-          <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-gradient-to-br from-badge-primary to-badge-secondary flex items-center justify-center">
-            <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
-          <h2 className="font-display text-2xl font-bold text-badge-primary">
+        <div className="p-6 pb-4 text-center border-b border-badge-primary/10">
+          <img src="/images/ds_logo.png" alt="Daisy & Son Co." className="h-16 w-auto mx-auto mb-4" />
+          <h2 className="font-display text-2xl font-semibold text-badge-primary">
             What's this badge for?
           </h2>
           <p className="text-badge-primary/60 mt-2">
@@ -77,25 +73,25 @@ function CategoryModal({ isOpen, onSelect, onClose }) {
             <button
               key={category.id}
               onClick={() => setSelected(category.id)}
-              className={`p-4 rounded-xl border-2 transition-all text-left ${
+              className={`p-4 rounded-xl border-2 transition-all text-left bg-white/80 backdrop-blur ${
                 selected === category.id
-                  ? 'border-badge-primary bg-badge-primary/5 shadow-md'
-                  : 'border-gray-200 hover:border-badge-primary/30 hover:bg-gray-50'
+                  ? 'border-badge-secondary bg-badge-secondary/5 shadow-md'
+                  : 'border-badge-primary/10 hover:border-badge-primary/30 hover:bg-white'
               }`}
             >
               <div className={`w-12 h-12 rounded-lg flex items-center justify-center mb-3 ${
                 selected === category.id
                   ? 'bg-badge-primary text-white'
-                  : 'bg-gray-100 text-badge-primary/60'
+                  : 'bg-badge-beige text-badge-primary/60'
               }`}>
                 {category.icon}
               </div>
               <h3 className={`font-semibold text-lg ${
-                selected === category.id ? 'text-badge-primary' : 'text-gray-700'
+                selected === category.id ? 'text-badge-primary' : 'text-badge-primary/70'
               }`}>
                 {category.title}
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-badge-primary/50 mt-1">
                 {category.description}
               </p>
               <div className="mt-2 flex flex-wrap gap-1">
@@ -105,7 +101,7 @@ function CategoryModal({ isOpen, onSelect, onClose }) {
                     className={`text-xs px-2 py-0.5 rounded-full ${
                       selected === category.id
                         ? 'bg-badge-primary/10 text-badge-primary'
-                        : 'bg-gray-100 text-gray-500'
+                        : 'bg-badge-beige text-badge-primary/50'
                     }`}
                   >
                     {ex}
@@ -115,24 +111,24 @@ function CategoryModal({ isOpen, onSelect, onClose }) {
               <div className={`mt-3 pt-2 border-t ${
                 selected === category.id
                   ? 'border-badge-primary/20'
-                  : 'border-gray-100'
+                  : 'border-badge-primary/10'
               }`}>
                 {category.pricingList ? (
                   <div className="space-y-1">
                     {category.pricingList.map((tier, i) => (
                       <div key={i} className={`flex justify-between text-xs ${
-                        selected === category.id ? 'text-badge-primary' : 'text-gray-500'
+                        selected === category.id ? 'text-badge-primary' : 'text-badge-primary/50'
                       }`}>
                         <span>{tier.qty}</span>
                         <span className={`font-semibold ${
-                          selected === category.id ? 'text-badge-secondary' : 'text-gray-600'
+                          selected === category.id ? 'text-badge-secondary' : 'text-badge-primary/60'
                         }`}>{tier.price}</span>
                       </div>
                     ))}
                   </div>
                 ) : (
                   <p className={`text-xs font-medium ${
-                    selected === category.id ? 'text-badge-secondary' : 'text-gray-400'
+                    selected === category.id ? 'text-badge-secondary' : 'text-badge-primary/40'
                   }`}>
                     💰 {category.pricing}
                   </p>

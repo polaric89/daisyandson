@@ -77,19 +77,15 @@ function OrderTracking({ onBack }) {
   const currentStepIndex = order ? statusSteps.indexOf(order.status || 'pending') : -1
 
   return (
-    <div className="min-h-screen bg-badge-bg">
+    <div className="min-h-screen bg-badge-cream">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
+      <header className="bg-white/80 backdrop-blur-lg border-b border-badge-primary/10 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-badge-primary to-badge-secondary flex items-center justify-center">
-                <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
-              </div>
+              <img src="/images/ds_logo.png" alt="Daisy & Son Co." className="h-12 w-auto" />
               <div>
-                <h1 className="font-display text-xl font-bold text-badge-primary">Track Your Order</h1>
+                <h1 className="font-display text-xl font-semibold text-badge-primary">Track Your Order</h1>
                 <p className="text-xs text-badge-primary/60">Check your badge order status</p>
               </div>
             </div>
@@ -109,7 +105,7 @@ function OrderTracking({ onBack }) {
 
       <main className="max-w-2xl mx-auto px-4 py-8">
         {/* Search Form */}
-        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+        <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg border border-badge-primary/10 p-6 mb-6">
           <h2 className="font-display text-lg font-semibold text-badge-primary mb-4">
             Find Your Order
           </h2>
@@ -121,7 +117,7 @@ function OrderTracking({ onBack }) {
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
                 searchType === 'orderId'
                   ? 'bg-badge-primary text-white'
-                  : 'bg-gray-100 text-badge-primary/70 hover:bg-gray-200'
+                  : 'bg-badge-beige text-badge-primary/70 hover:bg-badge-primary/10'
               }`}
             >
               Order ID
@@ -131,7 +127,7 @@ function OrderTracking({ onBack }) {
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
                 searchType === 'email'
                   ? 'bg-badge-primary text-white'
-                  : 'bg-gray-100 text-badge-primary/70 hover:bg-gray-200'
+                  : 'bg-badge-beige text-badge-primary/70 hover:bg-badge-primary/10'
               }`}
             >
               PayPal Email
@@ -145,7 +141,7 @@ function OrderTracking({ onBack }) {
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
               placeholder={searchType === 'orderId' ? 'Enter your Order ID' : 'Enter your PayPal email'}
-              className="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-badge-primary/20 focus:border-badge-primary"
+              className="flex-1 px-4 py-3 border border-badge-primary/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-badge-primary/20 focus:border-badge-primary bg-white"
             />
             <button
               type="submit"
@@ -170,9 +166,9 @@ function OrderTracking({ onBack }) {
 
         {/* Order Result */}
         {order && (
-          <div className="bg-white rounded-2xl shadow-lg overflow-hidden">
+          <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg border border-badge-primary/10 overflow-hidden">
             {/* Order Header */}
-            <div className="p-6 border-b border-gray-100">
+            <div className="p-6 border-b border-badge-primary/10">
               <div className="flex items-start justify-between">
                 <div>
                   <p className="text-sm text-badge-primary/60">Order ID</p>
@@ -194,19 +190,19 @@ function OrderTracking({ onBack }) {
             </div>
 
             {/* Progress Steps */}
-            <div className="p-6 bg-gray-50">
+            <div className="p-6 bg-badge-beige/50">
               <div className="flex items-center justify-between mb-2">
                 {statusSteps.map((step, idx) => (
                   <div key={step} className="flex flex-col items-center flex-1">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
                       idx <= currentStepIndex 
                         ? 'bg-badge-primary text-white' 
-                        : 'bg-gray-200 text-gray-400'
+                        : 'bg-badge-primary/20 text-badge-primary/40'
                     }`}>
                       {getStatusInfo(step).icon}
                     </div>
                     <span className={`text-xs mt-2 text-center ${
-                      idx <= currentStepIndex ? 'text-badge-primary font-medium' : 'text-gray-400'
+                      idx <= currentStepIndex ? 'text-badge-primary font-medium' : 'text-badge-primary/40'
                     }`}>
                       {getStatusInfo(step).label}
                     </span>
@@ -214,7 +210,7 @@ function OrderTracking({ onBack }) {
                 ))}
               </div>
               {/* Progress Bar */}
-              <div className="relative h-1 bg-gray-200 rounded-full mt-4">
+              <div className="relative h-1 bg-badge-primary/20 rounded-full mt-4">
                 <div 
                   className="absolute left-0 top-0 h-full bg-badge-primary rounded-full transition-all duration-500"
                   style={{ width: `${(currentStepIndex / (statusSteps.length - 1)) * 100}%` }}
@@ -235,8 +231,8 @@ function OrderTracking({ onBack }) {
                   <span className="text-badge-primary/60">Type</span>
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${
                     order.category === 'personal' 
-                      ? 'bg-blue-50 text-blue-600' 
-                      : 'bg-purple-50 text-purple-600'
+                      ? 'bg-badge-leaf/10 text-badge-leaf' 
+                      : 'bg-badge-secondary/10 text-badge-secondary'
                   }`}>
                     {order.category === 'personal' ? '👤 Personal' : '🎉 Event'}
                   </span>
@@ -313,7 +309,7 @@ function OrderTracking({ onBack }) {
 
               {/* Shipping Address */}
               {order.shipping?.address && (
-                <div className="mt-4 pt-4 border-t border-gray-100">
+                <div className="mt-4 pt-4 border-t border-badge-primary/10">
                   <h4 className="text-sm font-medium text-badge-primary/60 mb-2">Delivery Address</h4>
                   <div className="text-sm text-badge-primary">
                     <p className="font-medium">{order.shipping.name}</p>
@@ -326,7 +322,7 @@ function OrderTracking({ onBack }) {
 
               {/* Badge Previews */}
               {order.designs && order.designs.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-gray-100">
+                <div className="mt-6 pt-4 border-t border-badge-primary/10">
                   <h4 className="text-sm font-medium text-badge-primary/60 mb-3">Your Badge{order.designs.length > 1 ? 's' : ''}</h4>
                   <div className="flex flex-wrap gap-3">
                     {order.designs.map((design, idx) => (
@@ -343,9 +339,9 @@ function OrderTracking({ onBack }) {
 
         {/* No Results */}
         {searched && !order && !error && !loading && (
-          <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 flex items-center justify-center">
-              <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg border border-badge-primary/10 p-8 text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-badge-primary/10 flex items-center justify-center">
+              <svg className="w-8 h-8 text-badge-primary/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
