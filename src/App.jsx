@@ -116,6 +116,11 @@ function App() {
     return <FAQ onBack={() => navigateTo('landing')} />
   }
 
+  // FAQ page
+  if (currentPage === 'faq') {
+    return <FAQ onBack={() => setCurrentPage('landing')} />
+  }
+
   // Landing page
   if (currentPage === 'landing') {
     return (
