@@ -1,12 +1,26 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 /**
  * Landing Page Component
  * 
  * Professional landing page for the Photo Badge Designer
  */
-function LandingPage({ onGetStarted, onTrackOrder, onTerms, onPrivacy, onFAQ }) {
+function LandingPage({ onGetStarted, onTrackOrder, onTerms, onPrivacy, onFAQ, onReferrer }) {
   const [hoveredFeature, setHoveredFeature] = useState(null)
+  const [referrerName, setReferrerName] = useState(null)
+
+  // Check if referrer is logged in
+  useEffect(() => {
+    const storedReferrer = localStorage.getItem('referrer_data')
+    if (storedReferrer) {
+      try {
+        const data = JSON.parse(storedReferrer)
+        setReferrerName(data.name?.split(' ')[0] || 'Partner') // First name only
+      } catch (e) {
+        console.error('Invalid referrer data')
+      }
+    }
+  }, [])
 
   const features = [
     {
@@ -74,6 +88,17 @@ function LandingPage({ onGetStarted, onTrackOrder, onTerms, onPrivacy, onFAQ }) 
                 </svg>
                 Track Order
               </button>
+              {referrerName && (
+                <button 
+                  onClick={onReferrer}
+                  className="text-sm text-badge-secondary hover:text-badge-secondary/80 transition-colors flex items-center gap-1 font-medium"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  Hi, {referrerName}
+                </button>
+              )}
               <button 
                 onClick={onGetStarted}
                 className="btn-primary text-sm py-2 px-4"
@@ -383,6 +408,7 @@ function LandingPage({ onGetStarted, onTrackOrder, onTerms, onPrivacy, onFAQ }) 
             </div>
             
             <div className="flex items-center gap-6 text-sm text-badge-primary/60">
+              <button onClick={onReferrer} className="hover:text-badge-secondary transition-colors font-medium">Partner Program</button>
               <button onClick={onTerms} className="hover:text-badge-primary transition-colors">Terms</button>
               <button onClick={onPrivacy} className="hover:text-badge-primary transition-colors">Privacy</button>
               <a href="mailto:support@daisyandson.com" className="hover:text-badge-primary transition-colors">Contact</a>

@@ -10,11 +10,23 @@ function AdminDashboard({ onLogout }) {
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [filter, setFilter] = useState('all') // all, pending, completed
   const [categoryFilter, setCategoryFilter] = useState('all') // all, personal, event
+  
+  // Payouts state
+  const [activeView, setActiveView] = useState('orders') // 'orders' or 'payouts'
+  const [payouts, setPayouts] = useState([])
+  const [payoutsLoading, setPayoutsLoading] = useState(false)
 
   // Fetch orders from backend
   useEffect(() => {
     fetchOrders()
   }, [])
+
+  // Fetch payouts when switching to payouts view
+  useEffect(() => {
+    if (activeView === 'payouts') {
+      fetchPayouts()
+    }
+  }, [activeView])
 
   const fetchOrders = async () => {
     setLoading(true)
@@ -30,6 +42,41 @@ function AdminDashboard({ onLogout }) {
       setOrders([])
     }
     setLoading(false)
+  }
+
+  const fetchPayouts = async () => {
+    setPayoutsLoading(true)
+    try {
+      const response = await fetch('/api/admin/payouts')
+      if (response.ok) {
+        const data = await response.json()
+        setPayouts(data.payouts || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch payouts:', error)
+      setPayouts([])
+    }
+    setPayoutsLoading(false)
+  }
+
+  const processPayout = async (payoutId, status, adminNotes = '') => {
+    try {
+      const response = await fetch(`/api/admin/payouts/${payoutId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, adminNotes })
+      })
+      
+      if (response.ok) {
+        fetchPayouts()
+        alert(`Payout ${status === 'paid' ? 'marked as paid' : 'updated'} successfully`)
+      } else {
+        alert('Failed to update payout')
+      }
+    } catch (error) {
+      console.error('Failed to process payout:', error)
+      alert('Failed to process payout')
+    }
   }
 
   const updateOrderStatus = async (orderId, status) => {
@@ -277,6 +324,37 @@ function AdminDashboard({ onLogout }) {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* View Toggle */}
+        <div className="flex gap-4 mb-8">
+          <button
+            onClick={() => setActiveView('orders')}
+            className={`px-6 py-3 rounded-xl font-medium transition-all ${
+              activeView === 'orders'
+                ? 'bg-badge-primary text-white shadow-lg'
+                : 'bg-white/80 text-badge-primary border border-badge-primary/20 hover:bg-white'
+            }`}
+          >
+            📦 Orders
+          </button>
+          <button
+            onClick={() => setActiveView('payouts')}
+            className={`px-6 py-3 rounded-xl font-medium transition-all ${
+              activeView === 'payouts'
+                ? 'bg-badge-secondary text-white shadow-lg'
+                : 'bg-white/80 text-badge-secondary border border-badge-secondary/20 hover:bg-white'
+            }`}
+          >
+            💰 Referrer Payouts
+            {payouts.filter(p => p.status === 'pending').length > 0 && (
+              <span className="ml-2 px-2 py-0.5 bg-red-500 text-white text-xs rounded-full">
+                {payouts.filter(p => p.status === 'pending').length}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {activeView === 'orders' ? (
+          <>
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="bg-white/80 backdrop-blur rounded-xl p-4 border border-badge-primary/10">
@@ -578,6 +656,123 @@ function AdminDashboard({ onLogout }) {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+          </>
+        ) : (
+          /* Payouts Section */
+          <div className="space-y-6">
+            <h2 className="font-display text-xl font-semibold text-badge-primary">
+              Referrer Payouts
+            </h2>
+
+            {payoutsLoading ? (
+              <div className="text-center py-12">
+                <div className="w-10 h-10 mx-auto border-2 border-badge-primary border-t-transparent rounded-full animate-spin mb-4" />
+                <p className="text-badge-primary/60">Loading payouts...</p>
+              </div>
+            ) : payouts.length === 0 ? (
+              <div className="text-center py-12 bg-white/80 backdrop-blur rounded-xl border border-badge-primary/10">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-badge-primary/10 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-badge-primary/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <p className="text-badge-primary/60">No payout requests yet</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {/* Pending Payouts */}
+                {payouts.filter(p => p.status === 'pending').length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-badge-primary/60 mb-3 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+                      Pending Requests ({payouts.filter(p => p.status === 'pending').length})
+                    </h3>
+                    <div className="space-y-3">
+                      {payouts.filter(p => p.status === 'pending').map(payout => (
+                        <div key={payout.id} className="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <p className="font-medium text-badge-primary">{payout.referrerName}</p>
+                              <p className="text-sm text-badge-primary/60">{payout.referrerEmail}</p>
+                              <p className="text-xs text-badge-primary/50 mt-1">
+                                Requested: {new Date(payout.requestedAt).toLocaleString()}
+                              </p>
+                              <div className="mt-2 text-sm text-badge-primary/70">
+                                <p><strong>Payment Method:</strong> {payout.paymentMethod === 'bank_transfer' ? 'Bank Transfer' : 'Cash'}</p>
+                                {payout.paymentDetails?.iban && (
+                                  <p><strong>IBAN:</strong> {payout.paymentDetails.iban}</p>
+                                )}
+                                {payout.paymentDetails?.bankName && (
+                                  <p><strong>Bank:</strong> {payout.paymentDetails.bankName}</p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-2xl font-bold text-badge-secondary">{payout.amount.toFixed(2)} AED</p>
+                              <div className="flex gap-2 mt-3">
+                                <button
+                                  onClick={() => processPayout(payout.id, 'paid')}
+                                  className="px-4 py-2 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 transition-colors"
+                                >
+                                  ✓ Mark Paid
+                                </button>
+                                <button
+                                  onClick={() => processPayout(payout.id, 'rejected', 'Rejected by admin')}
+                                  className="px-4 py-2 bg-red-100 text-red-600 text-sm rounded-lg hover:bg-red-200 transition-colors"
+                                >
+                                  ✗ Reject
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Processed Payouts */}
+                {payouts.filter(p => p.status !== 'pending').length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-medium text-badge-primary/60 mb-3 flex items-center gap-2">
+                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                      Processed ({payouts.filter(p => p.status !== 'pending').length})
+                    </h3>
+                    <div className="space-y-3">
+                      {payouts.filter(p => p.status !== 'pending').map(payout => (
+                        <div key={payout.id} className={`rounded-xl p-4 ${
+                          payout.status === 'paid' 
+                            ? 'bg-green-50 border border-green-200' 
+                            : 'bg-red-50 border border-red-200'
+                        }`}>
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="font-medium text-badge-primary">{payout.referrerName}</p>
+                              <p className="text-sm text-badge-primary/60">{payout.referrerEmail}</p>
+                              <p className="text-xs text-badge-primary/50 mt-1">
+                                Processed: {payout.processedAt ? new Date(payout.processedAt).toLocaleString() : 'N/A'}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xl font-bold text-badge-primary">{payout.amount.toFixed(2)} AED</p>
+                              <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-medium ${
+                                payout.status === 'paid'
+                                  ? 'bg-green-100 text-green-700'
+                                  : 'bg-red-100 text-red-700'
+                              }`}>
+                                {payout.status.charAt(0).toUpperCase() + payout.status.slice(1)}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </main>

@@ -1,4 +1,4 @@
-import { useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import LandingPage from './components/Landing/LandingPage'
 import AdminLogin from './components/Admin/AdminLogin'
 import AdminDashboard from './components/Admin/AdminDashboard'
@@ -6,6 +6,7 @@ import CategoryModal from './components/CategoryModal/CategoryModal'
 import OrderTracking from './components/OrderTracking/OrderTracking'
 import { TermsOfService, PrivacyPolicy, FAQ } from './components/Legal'
 import { DesignerPage } from './components/Designer'
+import { ReferrerAuth, ReferrerDashboard } from './components/Referrals'
 import { useReferral } from './components/Referrals/useReferral'
 import { usePageNavigation, useBuyerInfo, useShipping, useOrder } from './hooks'
 
@@ -14,7 +15,7 @@ import { usePageNavigation, useBuyerInfo, useShipping, useOrder } from './hooks'
  * 
  * Pricing:
  * - Personal: 1 pc = 20 AED, 5 pcs = 17 AED each, 10+ pcs = 15 AED each
- * - Event: 1 design, min 10 pcs, 15 AED each
+ * - Event: 1 design, min 15 pcs, 13 AED each
  */
 function App() {
   // Navigation state
@@ -31,6 +32,12 @@ function App() {
     handleAdminLogin,
     handleAdminLogout
   } = usePageNavigation()
+
+  // Referrer state
+  const [referrerData, setReferrerData] = useState(() => {
+    const stored = localStorage.getItem('referrer_data')
+    return stored ? JSON.parse(stored) : null
+  })
   
   // Buyer info state
   const {
@@ -58,8 +65,8 @@ function App() {
     reset: resetOrder
   } = useOrder()
   
-  // Referral hook
-  const { referralId, hasReferral } = useReferral()
+  // Referral hook - referrerId is who referred this user
+  const { referrerId, hasReferral } = useReferral()
 
   // Handle successful payment
   const handlePaymentSuccess = useCallback(async (paymentDetails) => {
@@ -68,10 +75,10 @@ function App() {
       badgeCategory,
       buyerInfo,
       shippingRate,
-      referralId,
+      referralId: referrerId, // Pass referrerId as referralId for the order
       hasReferral
     })
-  }, [processPayment, badgeCategory, buyerInfo, shippingRate, referralId, hasReferral])
+  }, [processPayment, badgeCategory, buyerInfo, shippingRate, referrerId, hasReferral])
 
   // Reset for new design
   const handleStartNew = useCallback(() => {
@@ -87,6 +94,18 @@ function App() {
     resetOrder()
     handleBackToHome()
   }, [resetOrder, handleBackToHome])
+
+  // Referrer login handler
+  const handleReferrerLogin = useCallback((referrer, stats) => {
+    setReferrerData(referrer)
+    navigateTo('referrer-dashboard')
+  }, [navigateTo])
+
+  // Referrer logout handler
+  const handleReferrerLogout = useCallback(() => {
+    setReferrerData(null)
+    navigateTo('landing')
+  }, [navigateTo])
 
   // Admin pages
   if (currentPage === 'admin-login') {
@@ -116,9 +135,30 @@ function App() {
     return <FAQ onBack={() => navigateTo('landing')} />
   }
 
-  // FAQ page
-  if (currentPage === 'faq') {
-    return <FAQ onBack={() => setCurrentPage('landing')} />
+  // Referrer Auth page
+  if (currentPage === 'referrer-auth') {
+    return (
+      <ReferrerAuth 
+        onLogin={handleReferrerLogin}
+        onBack={() => navigateTo('landing')}
+      />
+    )
+  }
+
+  // Referrer Dashboard page
+  if (currentPage === 'referrer-dashboard') {
+    if (!referrerData) {
+      // If no referrer data, redirect to auth
+      navigateTo('referrer-auth')
+      return null
+    }
+    return (
+      <ReferrerDashboard 
+        referrer={referrerData}
+        onLogout={handleReferrerLogout}
+        onBack={() => navigateTo('landing')}
+      />
+    )
   }
 
   // Landing page
@@ -131,6 +171,7 @@ function App() {
           onTerms={() => navigateTo('terms')}
           onPrivacy={() => navigateTo('privacy')}
           onFAQ={() => navigateTo('faq')}
+          onReferrer={() => navigateTo(referrerData ? 'referrer-dashboard' : 'referrer-auth')}
         />
         <CategoryModal 
           isOpen={showCategoryModal}
@@ -149,11 +190,12 @@ function App() {
       hasReferral={hasReferral}
       onBackToHome={handleBackToHomeExtended}
       onTrackOrder={() => navigateTo('tracking')}
+      onReferrer={() => navigateTo(referrerData ? 'referrer-dashboard' : 'referrer-auth')}
       // Order state
       orderData={orderData}
       orderComplete={orderComplete}
       completedOrderId={completedOrderId}
-                onDesignsChange={handleDesignsChange}
+      onDesignsChange={handleDesignsChange}
       onStartNew={handleStartNew}
       // Buyer info
       buyerInfo={buyerInfo}

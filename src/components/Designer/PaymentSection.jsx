@@ -92,7 +92,7 @@ const PaymentSection = memo(function PaymentSection({
           </div>
           <p className="text-badge-primary/50">
             {badgeCategory === 'event' 
-              ? 'Design your badge and set quantity (min 10)' 
+              ? 'Design your badge and set quantity (min 15)' 
               : 'Design at least one badge to proceed'}
           </p>
         </div>
