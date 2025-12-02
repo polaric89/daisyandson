@@ -21,6 +21,7 @@ export function usePageNavigation() {
 
   // Navigation handlers
   const navigateTo = useCallback((page) => {
+    setShowCategoryModal(false) // Always close modal when navigating
     setCurrentPage(page)
     window.scrollTo(0, 0)
   }, [])
@@ -41,6 +42,7 @@ export function usePageNavigation() {
   }, [])
 
   const handleBackToHome = useCallback(() => {
+    setShowCategoryModal(false) // Ensure modal is closed
     setCurrentPage('landing')
     setBadgeCategory(null)
     window.scrollTo(0, 0)

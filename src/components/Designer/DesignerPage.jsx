@@ -15,6 +15,7 @@ function DesignerPage({
   hasReferral,
   onBackToHome,
   onTrackOrder,
+  onReferrer,
   // Order state
   orderData,
   orderComplete,
@@ -42,7 +43,7 @@ function DesignerPage({
       />
 
       {/* Referral Banner */}
-      <ReferralBanner />
+      <ReferralBanner onBecomeReferrer={onReferrer} />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto">
@@ -65,7 +66,7 @@ function DesignerPage({
               <p className="text-sm text-badge-primary/50 mb-6">
                 {badgeCategory === 'personal' 
                   ? 'Add multiple different badge designs. More badges = better price!' 
-                  : 'Create one design for all your event badges (minimum 10 pieces)'}
+                  : 'Create one design for all your event badges (minimum 15 pieces)'}
               </p>
               
               <MultiDesignManager 
