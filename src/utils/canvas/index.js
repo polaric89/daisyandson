@@ -19,3 +19,10 @@ export {
   formatFileSize
 } from './imageValidation'
 
+export {
+  exportForPrint,
+  exportCleanBleed,
+  exportCutSize,
+  getPrintSpecs
+} from './exportForPrint'
+

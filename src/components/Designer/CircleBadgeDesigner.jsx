@@ -14,7 +14,7 @@ import { validateImageQuality } from '../../utils/canvas/imageValidation'
  * - High-DPI export (2000x2000px)
  * - Image quality validation (min 800px)
  */
-const CircleBadgeDesigner = forwardRef(({ onDesignChange, onExport }, ref) => {
+const CircleBadgeDesigner = forwardRef(({ onDesignChange, onExport, onRemove }, ref) => {
   // Image state
   const [image, setImage] = useState(null)
   const [imageUrl, setImageUrl] = useState(null)
@@ -62,6 +62,21 @@ const CircleBadgeDesigner = forwardRef(({ onDesignChange, onExport }, ref) => {
       }
       
       return exportData
+    },
+    resetDesign: () => {
+      setImage(null)
+      setImageUrl(null)
+      setPosition({ x: 0, y: 0 })
+      setZoom(1)
+      setRotation(0)
+      setImageSize({ width: 0, height: 0 })
+      setQualityWarning(null)
+      if (onDesignChange) {
+        onDesignChange({ hasImage: false, position: { x: 0, y: 0 }, zoom: 1, rotation: 0 })
+      }
+      if (onExport) {
+        onExport(null)
+      }
     }
   }))
 
@@ -294,7 +309,7 @@ const CircleBadgeDesigner = forwardRef(({ onDesignChange, onExport }, ref) => {
     }
   }, [isDragging, handleMouseMove, handleMouseUp, handleTouchMove, handleTouchEnd])
 
-  // Remove image
+  // Remove image and notify parent to remove the design slot
   const handleRemoveImage = useCallback(() => {
     if (imageUrl) {
       URL.revokeObjectURL(imageUrl)
@@ -307,7 +322,20 @@ const CircleBadgeDesigner = forwardRef(({ onDesignChange, onExport }, ref) => {
     setRotation(0)
     setError(null)
     setQualityWarning(null)
-  }, [imageUrl])
+    
+    // Notify parent to remove the entire design slot
+    if (onRemove) {
+      onRemove()
+    } else {
+      // Fallback: just notify about image removal
+      if (onDesignChange) {
+        onDesignChange({ hasImage: false, position: { x: 0, y: 0 }, zoom: 1, rotation: 0 })
+      }
+      if (onExport) {
+        onExport(null)
+      }
+    }
+  }, [imageUrl, onDesignChange, onExport, onRemove])
 
   // Reset position
   const handleResetPosition = useCallback(() => {
@@ -383,54 +411,93 @@ const CircleBadgeDesigner = forwardRef(({ onDesignChange, onExport }, ref) => {
       {/* Preview Area */}
       {image && (
         <div className="space-y-6">
-          {/* Badge Preview */}
+          {/* Badge Preview with Print Marks */}
           <div className="flex justify-center">
-            <div
-              ref={containerRef}
-              className="badge-container cursor-move select-none"
-              style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE }}
-              onMouseDown={handleMouseDown}
-              onTouchStart={handleTouchStart}
-              onWheel={handleWheel}
-            >
-              {/* Circular mask container */}
+            <div className="relative">
+              {/* Bleed area indicator (outer ring) */}
               <div 
-                className="w-full h-full rounded-full overflow-hidden relative"
+                className="absolute rounded-full pointer-events-none"
                 style={{ 
-                  backgroundColor: '#e6cfbc'
+                  width: PREVIEW_SIZE + 30, // ~3mm bleed scaled
+                  height: PREVIEW_SIZE + 30,
+                  top: -15,
+                  left: -15,
+                  border: '2px dashed #00BFFF',
+                  opacity: 0.6
                 }}
-              >
-                {/* Image with transforms */}
-                <img
-                  src={imageUrl}
-                  alt="Badge preview"
-                  className="absolute pointer-events-none"
-                  style={{
-                    width: imageSize.width * zoom,
-                    height: imageSize.height * zoom,
-                    left: '50%',
-                    top: '50%',
-                    transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px) rotate(${rotation}deg)`,
-                    transformOrigin: 'center center',
-                    maxWidth: 'none'
-                  }}
-                  draggable={false}
-                />
-              </div>
+              />
               
-              {/* Drag indicator overlay */}
-              {isDragging && (
-                <div className="absolute inset-0 rounded-full border-2 border-badge-accent/50 pointer-events-none" />
-              )}
+              {/* Main badge container */}
+              <div
+                ref={containerRef}
+                className="badge-container cursor-move select-none relative"
+                style={{ width: PREVIEW_SIZE, height: PREVIEW_SIZE }}
+                onMouseDown={handleMouseDown}
+                onTouchStart={handleTouchStart}
+                onWheel={handleWheel}
+              >
+                {/* Circular mask container */}
+                <div 
+                  className="w-full h-full rounded-full overflow-hidden relative"
+                  style={{ 
+                    backgroundColor: '#e6cfbc'
+                  }}
+                >
+                  {/* Image with transforms */}
+                  <img
+                    src={imageUrl}
+                    alt="Badge preview"
+                    className="absolute pointer-events-none"
+                    style={{
+                      width: imageSize.width * zoom,
+                      height: imageSize.height * zoom,
+                      left: '50%',
+                      top: '50%',
+                      transform: `translate(-50%, -50%) translate(${position.x}px, ${position.y}px) rotate(${rotation}deg)`,
+                      transformOrigin: 'center center',
+                      maxWidth: 'none'
+                    }}
+                    draggable={false}
+                  />
+                </div>
+                
+                {/* Cutting line indicator (dashed on the edge) */}
+                <div 
+                  className="absolute inset-0 rounded-full pointer-events-none"
+                  style={{ 
+                    border: '2px dashed rgba(100, 100, 100, 0.5)'
+                  }}
+                />
+                
+                {/* Drag indicator overlay */}
+                {isDragging && (
+                  <div className="absolute inset-0 rounded-full border-2 border-badge-secondary/50 pointer-events-none" />
+                )}
+              </div>
             </div>
           </div>
 
-          {/* Image Info */}
-          <div className="flex justify-center">
+          {/* Image Info & Print Guide */}
+          <div className="flex flex-col items-center gap-2">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-badge-primary/10 rounded-full text-xs text-badge-primary/60">
               <span>{imageSize.width} × {imageSize.height}px</span>
               <span className="w-1 h-1 bg-badge-primary/30 rounded-full" />
               <span>Scroll to zoom • Drag to position</span>
+            </div>
+            <div className="flex flex-col items-center gap-2 text-xs text-badge-primary/50">
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-0.5 border-t-2 border-dashed" style={{ borderColor: '#00BFFF' }}></span>
+                  Cut Line
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-3 h-0.5 border-t-2 border-dashed border-gray-400"></span>
+                  Bleed Line
+                </span>
+              </div>
+              <p className="text-center text-badge-primary/40 text-[10px] max-w-[280px]">
+                Deviations may occur, image must be placed within the bleed line
+              </p>
             </div>
           </div>
 
