@@ -1,6 +1,8 @@
-/**
- * Designer Components Index
- */
-
 export { default as CircleBadgeDesigner } from './CircleBadgeDesigner'
-
+export { default as MultiDesignManager } from './MultiDesignManager'
+export { default as DesignerPage } from './DesignerPage'
+export { default as DesignerHeader } from './DesignerHeader'
+export { default as OrderComplete } from './OrderComplete'
+export { default as DesignPreview } from './DesignPreview'
+export { default as ShippingForm } from './ShippingForm'
+export { default as PaymentSection } from './PaymentSection'
