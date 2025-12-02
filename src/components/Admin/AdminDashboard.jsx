@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 /**
  * Admin Dashboard Component
@@ -139,6 +139,85 @@ function AdminDashboard({ onLogout }) {
       document.body.removeChild(link)
     }
   }
+
+  // Export with print marks (bleed, cut line)
+  const exportForPrint = useCallback(async (order) => {
+    const designs = order.designs?.length > 0 ? order.designs : (order.image ? [{ image: order.image }] : [])
+    
+    for (let idx = 0; idx < designs.length; idx++) {
+      const design = designs[idx]
+      if (!design.image) continue
+
+      try {
+        // Load the image
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        
+        await new Promise((resolve, reject) => {
+          img.onload = resolve
+          img.onerror = reject
+          img.src = design.image
+        })
+
+        // Create print-ready canvas with bleed (600 DPI for sharp prints)
+        const DPI = 600
+        const MM_TO_PX = DPI / 25.4
+        const BADGE_MM = 58
+        const BLEED_MM = 3
+        
+        const cuttingDiameter = Math.round(BADGE_MM * MM_TO_PX)
+        const bleedDiameter = Math.round((BADGE_MM + BLEED_MM * 2) * MM_TO_PX)
+        const margin = Math.round(10 * MM_TO_PX)
+        const canvasSize = bleedDiameter + margin * 2
+
+        const canvas = document.createElement('canvas')
+        canvas.width = canvasSize
+        canvas.height = canvasSize
+        const ctx = canvas.getContext('2d')
+
+        // White background
+        ctx.fillStyle = '#FFFFFF'
+        ctx.fillRect(0, 0, canvasSize, canvasSize)
+
+        const centerX = canvasSize / 2
+        const centerY = canvasSize / 2
+
+        // Draw the badge image (scaled to fill bleed area)
+        ctx.save()
+        ctx.beginPath()
+        ctx.arc(centerX, centerY, bleedDiameter / 2, 0, Math.PI * 2)
+        ctx.closePath()
+        ctx.clip()
+
+        // Scale image to fit bleed diameter
+        const scale = bleedDiameter / Math.min(img.width, img.height)
+        const drawWidth = img.width * scale
+        const drawHeight = img.height * scale
+
+        ctx.drawImage(
+          img,
+          centerX - drawWidth / 2,
+          centerY - drawHeight / 2,
+          drawWidth,
+          drawHeight
+        )
+        ctx.restore()
+
+        // Download
+        const dataUrl = canvas.toDataURL('image/png', 1.0)
+        const link = document.createElement('a')
+        link.href = dataUrl
+        link.download = `PRINT-badge-${order.id?.slice(-8) || 'unknown'}-design-${idx + 1}.png`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+      } catch (error) {
+        console.error('Failed to export for print:', error)
+        alert(`Failed to export design ${idx + 1} for print`)
+      }
+    }
+  }, [])
 
   const filteredOrders = orders.filter(order => {
     // Filter by status
@@ -457,7 +536,19 @@ function AdminDashboard({ onLogout }) {
                         <svg className="w-4 h-4 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                         </svg>
-                        {order.designs?.length > 1 ? `Export All (${order.designs.length})` : 'Export'}
+                        {order.designs?.length > 1 ? `Export (${order.designs.length})` : 'Export'}
+                      </button>
+                      
+                      {/* Print Ready Export with bleed/cut lines */}
+                      <button
+                        onClick={() => exportForPrint(order)}
+                        disabled={!order.image && (!order.designs || order.designs.length === 0)}
+                        className="text-sm py-2 px-4 rounded-xl bg-gradient-to-r from-badge-primary to-badge-leaf text-white hover:opacity-90 transition-all disabled:opacity-50"
+                      >
+                        <svg className="w-4 h-4 mr-1 inline" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                        </svg>
+                        Print Ready
                       </button>
                       
                       {/* Ship with Aramex */}

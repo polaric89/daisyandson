@@ -10,7 +10,7 @@ import { exportToPng } from '../../utils/canvas/exportToPng'
 function MultiDesignManager({ category, onDesignsChange }) {
   // For Personal: array of designs
   // For Event: single design with quantity
-  const [designs, setDesigns] = useState([{ id: 1, image: null, data: null }])
+  const [designs, setDesigns] = useState(() => [{ id: Date.now(), image: null, data: null }])
   const [eventQuantity, setEventQuantity] = useState(15) // Min 15 for events
   const [activeDesignIndex, setActiveDesignIndex] = useState(0)
   const designerRefs = useRef({})
@@ -46,46 +46,69 @@ function MultiDesignManager({ category, onDesignsChange }) {
   // Add new design slot (Personal only)
   const addDesign = useCallback(() => {
     if (category === 'personal') {
-      const newId = Math.max(...designs.map(d => d.id)) + 1
+      const newId = Date.now()
       setDesigns(prev => [...prev, { id: newId, image: null, data: null }])
       setActiveDesignIndex(designs.length)
     }
-  }, [category, designs])
+  }, [category, designs.length])
 
-  // Remove design slot
-  const removeDesign = useCallback((index) => {
-    if (designs.length > 1) {
-      setDesigns(prev => prev.filter((_, i) => i !== index))
-      if (activeDesignIndex >= index && activeDesignIndex > 0) {
-        setActiveDesignIndex(prev => prev - 1)
+  // Remove design by ID
+  const removeDesignById = (designId) => {
+    console.log('removeDesignById called with id:', designId)
+    
+    setDesigns(prevDesigns => {
+      console.log('prevDesigns:', prevDesigns.length, prevDesigns.map(d => d.id))
+      
+      if (prevDesigns.length > 1) {
+        const indexToRemove = prevDesigns.findIndex(d => d.id === designId)
+        const newDesigns = prevDesigns.filter(d => d.id !== designId)
+        console.log('Removed index:', indexToRemove, 'newDesigns:', newDesigns.length)
+        
+        // Update active index
+        setActiveDesignIndex(prev => {
+          if (indexToRemove !== -1 && prev >= indexToRemove && prev > 0) {
+            return prev - 1
+          }
+          if (prev >= newDesigns.length) {
+            return Math.max(0, newDesigns.length - 1)
+          }
+          return prev
+        })
+        
+        // Clean up ref for removed design
+        delete designerRefs.current[designId]
+        
+        return newDesigns
+      } else {
+        console.log('Only 1 design, resetting')
+        // Clear all refs
+        designerRefs.current = {}
+        setActiveDesignIndex(0)
+        return [{ id: Date.now(), image: null, data: null }]
       }
-    }
-  }, [designs.length, activeDesignIndex])
+    })
+  }
 
-  // Handle design change for a specific slot
-  const handleDesignChange = useCallback((index, data) => {
+  // Handle design change by ID
+  const handleDesignChangeById = useCallback((designId, data) => {
     setDesigns(prev => {
-      const updated = [...prev]
-      updated[index] = { ...updated[index], data }
-      return updated
+      return prev.map(d => d.id === designId ? { ...d, data } : d)
     })
   }, [])
 
-  // Handle export for a specific slot
-  const handleExport = useCallback((index, imageData) => {
+  // Handle export by ID
+  const handleExportById = useCallback((designId, imageData) => {
     setDesigns(prev => {
-      const updated = [...prev]
-      updated[index] = { ...updated[index], image: imageData }
-      return updated
+      return prev.map(d => d.id === designId ? { ...d, image: imageData } : d)
     })
   }, [])
 
   // Export all designs
   const exportAllDesigns = useCallback(async () => {
     const exports = []
-    for (let i = 0; i < designs.length; i++) {
-      if (designs[i].data?.hasImage && designerRefs.current[i]) {
-        const exportData = await designerRefs.current[i].exportDesign()
+    for (const design of designs) {
+      if (design.data?.hasImage && designerRefs.current[design.id]) {
+        const exportData = await designerRefs.current[design.id].exportDesign()
         exports.push(exportData)
       }
     }
@@ -122,10 +145,10 @@ function MultiDesignManager({ category, onDesignsChange }) {
       {category === 'personal' && (
         <div className="flex items-center gap-2 flex-wrap">
           {designs.map((design, index) => (
-            <button
+            <div
               key={design.id}
               onClick={() => setActiveDesignIndex(index)}
-              className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer flex items-center ${
                 activeDesignIndex === index
                   ? 'bg-badge-primary text-white'
                   : design.image
@@ -141,15 +164,22 @@ function MultiDesignManager({ category, onDesignsChange }) {
                   </svg>
                 </span>
               )}
-              {designs.length > 1 && (
+              {(designs.length > 1 || design.image) && (
                 <button
-                  onClick={(e) => { e.stopPropagation(); removeDesign(index); }}
-                  className="ml-2 text-red-400 hover:text-red-600"
+                  type="button"
+                  onClick={(e) => { 
+                    e.stopPropagation(); 
+                    e.preventDefault();
+                    console.log('Tab × clicked, design.id:', design.id);
+                    removeDesignById(design.id); 
+                  }}
+                  className="ml-2 w-5 h-5 flex items-center justify-center rounded-full bg-red-100 text-red-500 hover:bg-red-200 hover:text-red-700 text-sm font-bold"
+                  title={designs.length === 1 ? "Clear design" : "Remove badge"}
                 >
                   ×
                 </button>
               )}
-            </button>
+            </div>
           ))}
           <button
             onClick={addDesign}
@@ -171,11 +201,10 @@ function MultiDesignManager({ category, onDesignsChange }) {
             className={activeDesignIndex === index ? 'block' : 'hidden'}
           >
             <CircleBadgeDesigner
-              ref={(ref) => { designerRefs.current[index] = ref }}
-              onDesignChange={(data) => handleDesignChange(index, data)}
-              onExport={(img) => {
-                handleExport(index, img)
-              }}
+              ref={(ref) => { designerRefs.current[design.id] = ref }}
+              onDesignChange={(data) => handleDesignChangeById(design.id, data)}
+              onExport={(img) => handleExportById(design.id, img)}
+              onRemove={() => removeDesignById(design.id)}
             />
           </div>
         ))}
