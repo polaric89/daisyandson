@@ -1,33 +1,92 @@
-import { useState, useCallback } from 'react'
-import { useReferral } from './useReferral'
+import { useState, useCallback, useEffect } from 'react'
 
 /**
  * ReferralBanner Component
  * 
- * Displays a banner for users to share their referral link
- * and earn commissions.
+ * Displays a banner for registered referrers to share their link,
+ * or a CTA to become a referrer.
  */
-function ReferralBanner() {
-  const { 
-    userReferralId, 
-    generateReferralLink, 
-    copyReferralLink,
-    stats 
-  } = useReferral()
-  
+function ReferralBanner({ onBecomeReferrer }) {
+  const [referrer, setReferrer] = useState(null)
   const [copied, setCopied] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [stats, setStats] = useState({ clicks: 0, conversions: 0, earnings: 0 })
+
+  // Check if user is a registered referrer
+  useEffect(() => {
+    const storedReferrer = localStorage.getItem('referrer_data')
+    if (storedReferrer) {
+      try {
+        const data = JSON.parse(storedReferrer)
+        setReferrer(data)
+        // Fetch stats
+        fetchStats(data.id)
+      } catch (e) {
+        console.error('Invalid referrer data:', e)
+      }
+    }
+  }, [])
+
+  const fetchStats = async (referrerId) => {
+    try {
+      const response = await fetch(`/api/referrer/${referrerId}/dashboard`)
+      if (response.ok) {
+        const data = await response.json()
+        setStats({
+          clicks: data.stats.totalClicks || 0,
+          conversions: data.stats.totalConversions || 0,
+          earnings: data.stats.pendingEarnings || 0
+        })
+      }
+    } catch (error) {
+      console.error('Failed to fetch referrer stats:', error)
+    }
+  }
+
+  const referralLink = referrer 
+    ? `${window.location.origin}?ref=${referrer.referralCode}`
+    : null
 
   const handleCopy = useCallback(async () => {
-    const success = await copyReferralLink()
-    if (success) {
+    if (!referralLink) return
+    try {
+      await navigator.clipboard.writeText(referralLink)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
     }
-  }, [copyReferralLink])
+  }, [referralLink])
 
-  const referralLink = generateReferralLink()
+  // If not a registered referrer, show CTA
+  if (!referrer) {
+    return (
+      <div className="max-w-7xl mx-auto mb-6">
+        <button
+          onClick={onBecomeReferrer}
+          className="w-full glass-card px-4 py-3 flex items-center justify-between hover:bg-white/90 transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-badge-secondary/20 to-badge-primary/20 flex items-center justify-center">
+              <span className="text-xl">🤝</span>
+            </div>
+            <div className="text-left">
+              <p className="font-medium text-badge-primary">Partner With Us</p>
+              <p className="text-xs text-badge-primary/50">Refer friends & clients, earn commission on orders</p>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-2">
+            <span className="text-badge-secondary font-medium text-sm group-hover:underline">
+              Learn More →
+            </span>
+          </div>
+        </button>
+      </div>
+    )
+  }
 
+  // Registered referrer - show full banner
   return (
     <div className="max-w-7xl mx-auto mb-6">
       {/* Collapsed Banner */}
@@ -36,17 +95,17 @@ function ReferralBanner() {
         className="w-full glass-card px-4 py-3 flex items-center justify-between hover:bg-white/90 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-badge-secondary/20 to-badge-primary/20 flex items-center justify-center">
-            <span className="text-xl">🎁</span>
+          <div className="w-10 h-10 rounded-full bg-gradient-to-br from-green-500/20 to-badge-secondary/20 flex items-center justify-center">
+            <span className="text-xl">✓</span>
           </div>
           <div className="text-left">
-            <p className="font-medium text-badge-primary">Share & Earn</p>
-            <p className="text-xs text-badge-primary/50">Get 15% commission on every referral</p>
+            <p className="font-medium text-badge-primary">Welcome, {referrer.name}!</p>
+            <p className="text-xs text-badge-primary/50">Share your link to earn 10% commission</p>
           </div>
         </div>
         
         <div className="flex items-center gap-4">
-          {stats.conversions > 0 && (
+          {stats.earnings > 0 && (
             <div className="hidden sm:block text-right">
               <p className="text-badge-secondary font-bold">AED {stats.earnings.toFixed(2)}</p>
               <p className="text-xs text-badge-primary/50">{stats.conversions} sales</p>
@@ -101,49 +160,40 @@ function ReferralBanner() {
               </div>
               
               <p className="text-xs text-badge-primary/50 mt-2">
-                Your unique ID: <span className="font-mono text-badge-secondary">{userReferralId}</span>
+                Your code: <span className="font-mono text-badge-secondary">{referrer.referralCode}</span>
               </p>
             </div>
 
-            {/* Right: How it works */}
+            {/* Right: Quick Stats */}
             <div>
               <h3 className="font-display text-lg font-semibold text-badge-primary mb-3 flex items-center gap-2">
                 <svg className="w-5 h-5 text-badge-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                 </svg>
-                How It Works
+                Your Stats
               </h3>
               
-              <div className="space-y-2 text-sm">
-                <div className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-badge-primary/20 flex items-center justify-center text-xs text-badge-primary font-bold flex-shrink-0">1</span>
-                  <p className="text-badge-primary/70">Share your unique link with friends</p>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-3 bg-badge-primary/5 rounded-xl">
+                  <p className="text-xl font-bold text-badge-primary">{stats.clicks}</p>
+                  <p className="text-xs text-badge-primary/50">Clicks</p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-badge-primary/20 flex items-center justify-center text-xs text-badge-primary font-bold flex-shrink-0">2</span>
-                  <p className="text-badge-primary/70">They design and order their badges</p>
+                <div className="text-center p-3 bg-badge-primary/5 rounded-xl">
+                  <p className="text-xl font-bold text-badge-primary">{stats.conversions}</p>
+                  <p className="text-xs text-badge-primary/50">Sales</p>
                 </div>
-                <div className="flex items-start gap-3">
-                  <span className="w-6 h-6 rounded-full bg-badge-secondary/20 flex items-center justify-center text-xs text-badge-secondary font-bold flex-shrink-0">3</span>
-                  <p className="text-badge-primary/70">You earn <span className="text-badge-secondary font-semibold">15% commission</span> on each sale!</p>
+                <div className="text-center p-3 bg-badge-secondary/10 rounded-xl">
+                  <p className="text-xl font-bold text-badge-secondary">{stats.earnings.toFixed(0)}</p>
+                  <p className="text-xs text-badge-primary/50">AED Earned</p>
                 </div>
               </div>
-            </div>
-          </div>
 
-          {/* Stats Row */}
-          <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t border-badge-primary/10">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-badge-primary">{stats.clicks || 0}</p>
-              <p className="text-xs text-badge-primary/50">Link Clicks</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-badge-primary">{stats.conversions || 0}</p>
-              <p className="text-xs text-badge-primary/50">Conversions</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-badge-secondary">AED {(stats.earnings || 0).toFixed(2)}</p>
-              <p className="text-xs text-badge-primary/50">Total Earnings</p>
+              <button
+                onClick={onBecomeReferrer}
+                className="mt-4 w-full text-sm text-badge-primary/60 hover:text-badge-primary transition-colors"
+              >
+                View Full Dashboard →
+              </button>
             </div>
           </div>
         </div>

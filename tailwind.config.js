@@ -20,15 +20,15 @@ export default {
           900: '#1a2727',
         },
         badge: {
-          bg: '#fdfcfa',        // Warm cream background
-          surface: '#f5f0e8',   // Soft beige surface
+          bg: '#ffffff',        // Clean white background
+          surface: '#f8f6f3',   // Light warm surface
           primary: '#3d5a5a',   // Dark teal (from logo text)
           secondary: '#c9a86c', // Warm gold (from logo ring)
           accent: '#3d5a5a',    // Teal accent (alias)
           gold: '#c9a86c',      // Gold (alias)
           rose: '#9c7b70',      // Dusty mauve/rose
-          cream: '#fdfcfa',     // Warm white
-          beige: '#f5f0e8',     // Soft beige
+          cream: '#ffffff',     // Clean white
+          beige: '#f8f6f3',     // Light warm beige
           leaf: '#536b6b',      // Muted teal-green (from leaves)
         }
       },
