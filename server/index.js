@@ -330,10 +330,11 @@ app.get('/api/referral-stats/:referralId', async (req, res) => {
  * POST /api/referrer/register
  * 
  * Register as a new referrer
+ * Payment details are collected at payout request time, not registration
  */
 app.post('/api/referrer/register', async (req, res) => {
   try {
-    const { name, email, phone, password, paymentMethod, paymentDetails } = req.body
+    const { name, email, phone, password } = req.body
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' })
@@ -370,13 +371,8 @@ app.post('/api/referrer/register', async (req, res) => {
       email: email.toLowerCase(),
       phone: phone || '',
       passwordHash,
-      paymentMethod: paymentMethod || 'bank_transfer',
-      paymentDetails: paymentDetails || {},
       registeredAt: new Date().toISOString(),
-      status: 'active',
-      totalEarnings: 0,
-      pendingEarnings: 0,
-      paidEarnings: 0
+      status: 'active'
     }
 
     referrers.push(newReferrer)

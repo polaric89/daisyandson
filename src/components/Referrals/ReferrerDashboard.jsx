@@ -10,6 +10,8 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
   const [error, setError] = useState(null)
   const [showPayoutModal, setShowPayoutModal] = useState(false)
   const [payoutAmount, setPayoutAmount] = useState('')
+  const [payoutMethod, setPayoutMethod] = useState('paypal')
+  const [payoutDetails, setPayoutDetails] = useState({ paypalEmail: '', bankName: '', iban: '' })
   const [payoutLoading, setPayoutLoading] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -58,12 +60,28 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
       return
     }
 
+    // Validate payment details
+    if (payoutMethod === 'paypal' && !payoutDetails.paypalEmail) {
+      alert('Please enter your PayPal email')
+      return
+    }
+    if (payoutMethod === 'bank_transfer' && (!payoutDetails.bankName || !payoutDetails.iban)) {
+      alert('Please enter bank name and IBAN')
+      return
+    }
+
     setPayoutLoading(true)
     try {
       const response = await fetch(`/api/referrer/${referrer.id}/request-payout`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amount })
+        body: JSON.stringify({ 
+          amount,
+          paymentMethod: payoutMethod,
+          paymentDetails: payoutMethod === 'paypal' 
+            ? { paypalEmail: payoutDetails.paypalEmail }
+            : { bankName: payoutDetails.bankName, iban: payoutDetails.iban }
+        })
       })
 
       const data = await response.json()
@@ -75,6 +93,7 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
       alert(data.message)
       setShowPayoutModal(false)
       setPayoutAmount('')
+      setPayoutDetails({ paypalEmail: '', bankName: '', iban: '' })
       fetchDashboard()
     } catch (err) {
       alert(err.message)
@@ -309,7 +328,7 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
       {/* Payout Modal */}
       {showPayoutModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 max-w-md w-full">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full max-h-[90vh] overflow-y-auto">
             <h3 className="font-display text-xl font-semibold text-badge-primary mb-4">
               Request Payout
             </h3>
@@ -319,7 +338,7 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
                 Available balance: <span className="font-bold text-green-600">{dashboard.stats.pendingEarnings.toFixed(2)} AED</span>
               </p>
               <label className="block text-sm font-medium text-badge-primary mb-1">
-                Amount (AED)
+                Amount (AED) <span className="text-red-500">*</span>
               </label>
               <input
                 type="number"
@@ -332,20 +351,95 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
               />
             </div>
 
-            <div className="mb-4 p-3 bg-badge-primary/5 rounded-xl">
-              <p className="text-sm text-badge-primary/70">
-                <strong>Payment Method:</strong> {referrer.paymentMethod === 'bank_transfer' ? 'Bank Transfer' : 'Cash Pickup'}
-              </p>
-              {referrer.paymentDetails?.iban && (
-                <p className="text-sm text-badge-primary/70">
-                  <strong>IBAN:</strong> {referrer.paymentDetails.iban}
-                </p>
-              )}
+            {/* Payment Method Selection */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-badge-primary mb-2">
+                Payment Method <span className="text-red-500">*</span>
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPayoutMethod('paypal')}
+                  className={`p-3 rounded-xl border-2 transition-all text-center ${
+                    payoutMethod === 'paypal'
+                      ? 'border-badge-secondary bg-badge-secondary/10'
+                      : 'border-badge-primary/20 hover:border-badge-primary/40'
+                  }`}
+                >
+                  <span className="text-2xl mb-1 block">💳</span>
+                  <span className={`text-sm font-medium ${payoutMethod === 'paypal' ? 'text-badge-primary' : 'text-badge-primary/70'}`}>
+                    PayPal
+                  </span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayoutMethod('bank_transfer')}
+                  className={`p-3 rounded-xl border-2 transition-all text-center ${
+                    payoutMethod === 'bank_transfer'
+                      ? 'border-badge-secondary bg-badge-secondary/10'
+                      : 'border-badge-primary/20 hover:border-badge-primary/40'
+                  }`}
+                >
+                  <span className="text-2xl mb-1 block">🏦</span>
+                  <span className={`text-sm font-medium ${payoutMethod === 'bank_transfer' ? 'text-badge-primary' : 'text-badge-primary/70'}`}>
+                    Bank Transfer
+                  </span>
+                </button>
+              </div>
             </div>
+
+            {/* Payment Details */}
+            {payoutMethod === 'paypal' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-badge-primary mb-1">
+                  PayPal Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={payoutDetails.paypalEmail}
+                  onChange={(e) => setPayoutDetails(prev => ({ ...prev, paypalEmail: e.target.value }))}
+                  placeholder="your@paypal.com"
+                  className="w-full px-4 py-2.5 border border-badge-primary/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-badge-primary/20"
+                />
+              </div>
+            )}
+
+            {payoutMethod === 'bank_transfer' && (
+              <>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-badge-primary mb-1">
+                    Bank Name <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={payoutDetails.bankName}
+                    onChange={(e) => setPayoutDetails(prev => ({ ...prev, bankName: e.target.value }))}
+                    placeholder="e.g., Emirates NBD"
+                    className="w-full px-4 py-2.5 border border-badge-primary/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-badge-primary/20"
+                  />
+                </div>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-badge-primary mb-1">
+                    IBAN <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    value={payoutDetails.iban}
+                    onChange={(e) => setPayoutDetails(prev => ({ ...prev, iban: e.target.value }))}
+                    placeholder="AE..."
+                    className="w-full px-4 py-2.5 border border-badge-primary/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-badge-primary/20"
+                  />
+                </div>
+              </>
+            )}
 
             <div className="flex gap-3">
               <button
-                onClick={() => setShowPayoutModal(false)}
+                onClick={() => {
+                  setShowPayoutModal(false)
+                  setPayoutAmount('')
+                  setPayoutDetails({ paypalEmail: '', bankName: '', iban: '' })
+                }}
                 className="flex-1 btn-secondary"
               >
                 Cancel

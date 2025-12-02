@@ -15,6 +15,8 @@ function AdminDashboard({ onLogout }) {
   const [activeView, setActiveView] = useState('orders') // 'orders' or 'payouts'
   const [payouts, setPayouts] = useState([])
   const [payoutsLoading, setPayoutsLoading] = useState(false)
+  const [expandedPayouts, setExpandedPayouts] = useState(new Set())
+  const [payoutTab, setPayoutTab] = useState('pending') // 'pending' or 'processed'
 
   // Fetch orders from backend
   useEffect(() => {
@@ -57,6 +59,18 @@ function AdminDashboard({ onLogout }) {
       setPayouts([])
     }
     setPayoutsLoading(false)
+  }
+
+  const togglePayoutExpanded = (payoutId) => {
+    setExpandedPayouts(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(payoutId)) {
+        newSet.delete(payoutId)
+      } else {
+        newSet.add(payoutId)
+      }
+      return newSet
+    })
   }
 
   const processPayout = async (payoutId, status, adminNotes = '') => {
@@ -666,112 +680,245 @@ function AdminDashboard({ onLogout }) {
               Referrer Payouts
             </h2>
 
+            {/* Payout Tabs */}
+            <div className="flex gap-2 mb-6">
+              <button
+                onClick={() => setPayoutTab('pending')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                  payoutTab === 'pending'
+                    ? 'bg-amber-500 text-white'
+                    : 'bg-white/80 text-badge-primary/70 border border-badge-primary/20 hover:bg-white'
+                }`}
+              >
+                <span className="w-2 h-2 bg-current rounded-full"></span>
+                Pending
+                {payouts.filter(p => p.status === 'pending').length > 0 && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${
+                    payoutTab === 'pending' ? 'bg-white/20' : 'bg-amber-500 text-white'
+                  }`}>
+                    {payouts.filter(p => p.status === 'pending').length}
+                  </span>
+                )}
+              </button>
+              <button
+                onClick={() => setPayoutTab('processed')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all flex items-center gap-2 ${
+                  payoutTab === 'processed'
+                    ? 'bg-green-500 text-white'
+                    : 'bg-white/80 text-badge-primary/70 border border-badge-primary/20 hover:bg-white'
+                }`}
+              >
+                <span className="w-2 h-2 bg-current rounded-full"></span>
+                Processed
+                {payouts.filter(p => p.status !== 'pending').length > 0 && (
+                  <span className={`px-2 py-0.5 rounded-full text-xs ${
+                    payoutTab === 'processed' ? 'bg-white/20' : 'bg-green-500 text-white'
+                  }`}>
+                    {payouts.filter(p => p.status !== 'pending').length}
+                  </span>
+                )}
+              </button>
+            </div>
+
             {payoutsLoading ? (
               <div className="text-center py-12">
                 <div className="w-10 h-10 mx-auto border-2 border-badge-primary border-t-transparent rounded-full animate-spin mb-4" />
                 <p className="text-badge-primary/60">Loading payouts...</p>
               </div>
-            ) : payouts.length === 0 ? (
-              <div className="text-center py-12 bg-white/80 backdrop-blur rounded-xl border border-badge-primary/10">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-badge-primary/10 flex items-center justify-center">
-                  <svg className="w-8 h-8 text-badge-primary/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
+            ) : payoutTab === 'pending' ? (
+              /* Pending Payouts Tab */
+              payouts.filter(p => p.status === 'pending').length === 0 ? (
+                <div className="text-center py-12 bg-white/80 backdrop-blur rounded-xl border border-badge-primary/10">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-amber-100 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  </div>
+                  <p className="text-badge-primary/60">No pending payout requests</p>
                 </div>
-                <p className="text-badge-primary/60">No payout requests yet</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Pending Payouts */}
-                {payouts.filter(p => p.status === 'pending').length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium text-badge-primary/60 mb-3 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-                      Pending Requests ({payouts.filter(p => p.status === 'pending').length})
-                    </h3>
-                    <div className="space-y-3">
-                      {payouts.filter(p => p.status === 'pending').map(payout => (
-                        <div key={payout.id} className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <p className="font-medium text-badge-primary">{payout.referrerName}</p>
-                              <p className="text-sm text-badge-primary/60">{payout.referrerEmail}</p>
-                              <p className="text-xs text-badge-primary/50 mt-1">
-                                Requested: {new Date(payout.requestedAt).toLocaleString()}
-                              </p>
-                              <div className="mt-2 text-sm text-badge-primary/70">
-                                <p><strong>Payment Method:</strong> {payout.paymentMethod === 'bank_transfer' ? 'Bank Transfer' : 'Cash'}</p>
-                                {payout.paymentDetails?.iban && (
-                                  <p><strong>IBAN:</strong> {payout.paymentDetails.iban}</p>
-                                )}
-                                {payout.paymentDetails?.bankName && (
-                                  <p><strong>Bank:</strong> {payout.paymentDetails.bankName}</p>
-                                )}
-                              </div>
+              ) : (
+                <div className="space-y-2">
+                  {payouts.filter(p => p.status === 'pending').map(payout => (
+                        <div key={payout.id} className="bg-amber-50 border border-amber-200 rounded-xl overflow-hidden">
+                          {/* Accordion Header */}
+                          <button
+                            onClick={() => togglePayoutExpanded(payout.id)}
+                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-amber-100/50 transition-colors"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="text-xs font-mono bg-amber-200 text-amber-800 px-2 py-1 rounded">
+                                #{payout.id.slice(-8)}
+                              </span>
+                              <span className="font-medium text-badge-primary">{payout.referrerName}</span>
+                              <span className="text-badge-secondary font-bold">{payout.amount.toFixed(2)} AED</span>
                             </div>
-                            <div className="text-right">
-                              <p className="text-2xl font-bold text-badge-secondary">{payout.amount.toFixed(2)} AED</p>
-                              <div className="flex gap-2 mt-3">
+                            <svg 
+                              className={`w-5 h-5 text-badge-primary/50 transition-transform ${expandedPayouts.has(payout.id) ? 'rotate-180' : ''}`}
+                              fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          
+                          {/* Accordion Content */}
+                          {expandedPayouts.has(payout.id) && (
+                            <div className="px-4 pb-4 border-t border-amber-200 bg-white/50">
+                              <div className="pt-4 grid md:grid-cols-2 gap-4">
+                                {/* User Info */}
+                                <div>
+                                  <p className="text-sm text-badge-primary/60 mb-2">Referrer Details</p>
+                                  <p className="font-medium text-badge-primary">{payout.referrerName}</p>
+                                  <p className="text-sm text-badge-primary/70">{payout.referrerEmail}</p>
+                                  <p className="text-xs text-badge-primary/50 mt-2">
+                                    Requested: {new Date(payout.requestedAt).toLocaleString()}
+                                  </p>
+                                </div>
+                                
+                                {/* Payment Details */}
+                                <div>
+                                  <p className="text-sm text-badge-primary/60 mb-2">💳 Payment Details</p>
+                                  {payout.paymentMethod === 'paypal' ? (
+                                    <div className="text-sm">
+                                      <p className="font-medium text-badge-primary">PayPal</p>
+                                      <p className="text-badge-primary/70 font-mono">{payout.paymentDetails?.paypalEmail || 'Not provided'}</p>
+                                    </div>
+                                  ) : payout.paymentMethod === 'bank_transfer' ? (
+                                    <div className="text-sm space-y-1">
+                                      <p className="font-medium text-badge-primary">Bank Transfer</p>
+                                      <p className="text-badge-primary/70">Bank: {payout.paymentDetails?.bankName || 'Not provided'}</p>
+                                      <p className="text-badge-primary/70 font-mono text-xs">{payout.paymentDetails?.iban || 'No IBAN'}</p>
+                                    </div>
+                                  ) : (
+                                    <p className="text-sm text-badge-primary/70">{payout.paymentMethod || 'Not specified'}</p>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Action Buttons */}
+                              <div className="flex gap-3 mt-4 pt-4 border-t border-amber-100">
                                 <button
                                   onClick={() => processPayout(payout.id, 'paid')}
-                                  className="px-4 py-2 bg-green-500 text-white text-sm rounded-lg hover:bg-green-600 transition-colors"
+                                  className="px-4 py-2.5 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
                                 >
-                                  ✓ Mark Paid
+                                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                  Mark as Paid
                                 </button>
                                 <button
                                   onClick={() => processPayout(payout.id, 'rejected', 'Rejected by admin')}
-                                  className="px-4 py-2 bg-red-100 text-red-600 text-sm rounded-lg hover:bg-red-200 transition-colors"
+                                  className="px-4 py-2.5 bg-red-100 text-red-600 font-medium rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center gap-2"
                                 >
-                                  ✗ Reject
+                                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                  </svg>
+                                  Reject
                                 </button>
                               </div>
                             </div>
-                          </div>
+                          )}
                         </div>
                       ))}
-                    </div>
+                </div>
+              )
+            ) : (
+              /* Processed Payouts Tab */
+              payouts.filter(p => p.status !== 'pending').length === 0 ? (
+                <div className="text-center py-12 bg-white/80 backdrop-blur rounded-xl border border-badge-primary/10">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-100 flex items-center justify-center">
+                    <svg className="w-8 h-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                    </svg>
                   </div>
-                )}
-
-                {/* Processed Payouts */}
-                {payouts.filter(p => p.status !== 'pending').length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-medium text-badge-primary/60 mb-3 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                      Processed ({payouts.filter(p => p.status !== 'pending').length})
-                    </h3>
-                    <div className="space-y-3">
-                      {payouts.filter(p => p.status !== 'pending').map(payout => (
-                        <div key={payout.id} className={`rounded-xl p-4 ${
-                          payout.status === 'paid' 
-                            ? 'bg-green-50 border border-green-200' 
-                            : 'bg-red-50 border border-red-200'
+                  <p className="text-badge-primary/60">No processed payouts yet</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {payouts.filter(p => p.status !== 'pending').map(payout => (
+                    <div key={payout.id} className={`rounded-xl overflow-hidden ${
+                      payout.status === 'paid' 
+                        ? 'bg-green-50 border border-green-200' 
+                        : 'bg-red-50 border border-red-200'
+                    }`}>
+                      {/* Accordion Header */}
+                      <button
+                        onClick={() => togglePayoutExpanded(payout.id)}
+                        className={`w-full px-4 py-3 flex items-center justify-between transition-colors ${
+                          payout.status === 'paid' ? 'hover:bg-green-100/50' : 'hover:bg-red-100/50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className={`text-xs font-mono px-2 py-1 rounded ${
+                            payout.status === 'paid' 
+                              ? 'bg-green-200 text-green-800' 
+                              : 'bg-red-200 text-red-800'
+                          }`}>
+                            #{payout.id.slice(-8)}
+                          </span>
+                          <span className="font-medium text-badge-primary">{payout.referrerName}</span>
+                          <span className="text-badge-primary/70 font-bold">{payout.amount.toFixed(2)} AED</span>
+                          <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+                            payout.status === 'paid'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-red-100 text-red-700'
+                          }`}>
+                            {payout.status.charAt(0).toUpperCase() + payout.status.slice(1)}
+                          </span>
+                        </div>
+                        <svg 
+                          className={`w-5 h-5 text-badge-primary/50 transition-transform ${expandedPayouts.has(payout.id) ? 'rotate-180' : ''}`}
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      
+                      {/* Accordion Content */}
+                      {expandedPayouts.has(payout.id) && (
+                        <div className={`px-4 pb-4 border-t ${
+                          payout.status === 'paid' ? 'border-green-200 bg-white/50' : 'border-red-200 bg-white/50'
                         }`}>
-                          <div className="flex items-center justify-between">
+                          <div className="pt-4 grid md:grid-cols-2 gap-4">
+                            {/* User Info */}
                             <div>
+                              <p className="text-sm text-badge-primary/60 mb-2">Referrer Details</p>
                               <p className="font-medium text-badge-primary">{payout.referrerName}</p>
-                              <p className="text-sm text-badge-primary/60">{payout.referrerEmail}</p>
-                              <p className="text-xs text-badge-primary/50 mt-1">
+                              <p className="text-sm text-badge-primary/70">{payout.referrerEmail}</p>
+                              <p className="text-xs text-badge-primary/50 mt-2">
                                 Processed: {payout.processedAt ? new Date(payout.processedAt).toLocaleString() : 'N/A'}
                               </p>
                             </div>
-                            <div className="text-right">
-                              <p className="text-xl font-bold text-badge-primary">{payout.amount.toFixed(2)} AED</p>
-                              <span className={`inline-block mt-1 px-3 py-1 rounded-full text-xs font-medium ${
-                                payout.status === 'paid'
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-red-100 text-red-700'
-                              }`}>
-                                {payout.status.charAt(0).toUpperCase() + payout.status.slice(1)}
-                              </span>
+                            
+                            {/* Payment Details */}
+                            <div>
+                              <p className="text-sm text-badge-primary/60 mb-2">💳 Payment Details</p>
+                              {payout.paymentMethod === 'paypal' ? (
+                                <div className="text-sm">
+                                  <p className="font-medium text-badge-primary">PayPal</p>
+                                  <p className="text-badge-primary/70 font-mono">{payout.paymentDetails?.paypalEmail || 'Not provided'}</p>
+                                </div>
+                              ) : payout.paymentMethod === 'bank_transfer' ? (
+                                <div className="text-sm space-y-1">
+                                  <p className="font-medium text-badge-primary">Bank Transfer</p>
+                                  <p className="text-badge-primary/70">Bank: {payout.paymentDetails?.bankName || 'Not provided'}</p>
+                                  <p className="text-badge-primary/70 font-mono text-xs">{payout.paymentDetails?.iban || 'No IBAN'}</p>
+                                </div>
+                              ) : (
+                                <p className="text-sm text-badge-primary/70">{payout.paymentMethod || 'Not specified'}</p>
+                              )}
                             </div>
                           </div>
+                          {payout.adminNotes && (
+                            <div className="mt-3 pt-3 border-t border-badge-primary/10">
+                              <p className="text-xs text-badge-primary/50">Admin Notes: {payout.adminNotes}</p>
+                            </div>
+                          )}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                )}
-              </div>
+                  ))}
+                </div>
+              )
             )}
           </div>
         )}

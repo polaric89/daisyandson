@@ -15,11 +15,7 @@ function ReferrerAuth({ onLogin, onBack }) {
     name: '',
     email: '',
     password: '',
-    phone: '',
-    paymentMethod: 'bank_transfer',
-    bankName: '',
-    accountNumber: '',
-    iban: ''
+    phone: ''
   })
 
   const updateField = (field, value) => {
@@ -40,13 +36,7 @@ function ReferrerAuth({ onLogin, onBack }) {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          phone: formData.phone,
-          paymentMethod: formData.paymentMethod,
-          paymentDetails: {
-            bankName: formData.bankName,
-            accountNumber: formData.accountNumber,
-            iban: formData.iban
-          }
+          phone: formData.phone
         })
       })
 
@@ -58,7 +48,7 @@ function ReferrerAuth({ onLogin, onBack }) {
 
       setSuccess('Registration successful! You can now login.')
       setMode('login')
-      setFormData(prev => ({ ...prev, name: '', password: '', phone: '', bankName: '', accountNumber: '', iban: '' }))
+      setFormData(prev => ({ ...prev, name: '', password: '', phone: '' }))
     } catch (err) {
       setError(err.message)
     } finally {
@@ -196,54 +186,6 @@ function ReferrerAuth({ onLogin, onBack }) {
               </div>
             )}
 
-            {/* Payment Details (Registration only) */}
-            {mode === 'register' && (
-              <>
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-badge-primary mb-1">
-                    Payment Method
-                  </label>
-                  <select
-                    value={formData.paymentMethod}
-                    onChange={(e) => updateField('paymentMethod', e.target.value)}
-                    className="w-full px-4 py-2.5 border border-badge-primary/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-badge-primary/20 bg-white"
-                  >
-                    <option value="bank_transfer">Bank Transfer</option>
-                    <option value="cash">Cash Pickup</option>
-                  </select>
-                </div>
-
-                {formData.paymentMethod === 'bank_transfer' && (
-                  <>
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-badge-primary mb-1">
-                        Bank Name
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.bankName}
-                        onChange={(e) => updateField('bankName', e.target.value)}
-                        placeholder="e.g., Emirates NBD"
-                        className="w-full px-4 py-2.5 border border-badge-primary/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-badge-primary/20"
-                      />
-                    </div>
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-badge-primary mb-1">
-                        IBAN
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.iban}
-                        onChange={(e) => updateField('iban', e.target.value)}
-                        placeholder="AE..."
-                        className="w-full px-4 py-2.5 border border-badge-primary/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-badge-primary/20"
-                      />
-                    </div>
-                  </>
-                )}
-              </>
-            )}
-
             {/* Submit Button */}
             <button
               type="submit"
@@ -318,8 +260,8 @@ function ReferrerAuth({ onLogin, onBack }) {
               <div className="flex items-start gap-3">
                 <span className="text-2xl">🏦</span>
                 <div>
-                  <p className="font-medium text-badge-primary">Easy Payouts</p>
-                  <p className="text-sm text-badge-primary/60">Request payout anytime (min 50 AED)</p>
+                  <p className="font-medium text-badge-primary">Flexible Payouts</p>
+                  <p className="text-sm text-badge-primary/60">PayPal or Bank Transfer (min 50 AED)</p>
                 </div>
               </div>
             </div>
