@@ -7,7 +7,7 @@ import AdminDashboard from './components/Admin/AdminDashboard'
 import CategoryModal from './components/CategoryModal/CategoryModal'
 import MultiDesignManager from './components/Designer/MultiDesignManager'
 import OrderTracking from './components/OrderTracking/OrderTracking'
-import { TermsOfService, PrivacyPolicy } from './components/Legal'
+import { TermsOfService, PrivacyPolicy, FAQ } from './components/Legal'
 import { useReferral } from './components/Referrals/useReferral'
 
 /**
@@ -234,6 +234,11 @@ function App() {
     return <PrivacyPolicy onBack={() => setCurrentPage('landing')} />
   }
 
+  // FAQ page
+  if (currentPage === 'faq') {
+    return <FAQ onBack={() => setCurrentPage('landing')} />
+  }
+
   // Landing page
   if (currentPage === 'landing') {
     return (
@@ -243,6 +248,7 @@ function App() {
           onTrackOrder={() => setCurrentPage('tracking')}
           onTerms={() => setCurrentPage('terms')}
           onPrivacy={() => setCurrentPage('privacy')}
+          onFAQ={() => setCurrentPage('faq')}
         />
         <CategoryModal 
           isOpen={showCategoryModal}
