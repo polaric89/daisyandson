@@ -48,7 +48,10 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
     }
   }
 
-  const handleRequestPayout = async () => {
+  const handleRequestPayout = async (e) => {
+    e?.preventDefault()
+    e?.stopPropagation()
+    
     const amount = parseFloat(payoutAmount)
     if (isNaN(amount) || amount < 50) {
       alert('Minimum payout is 50 AED')
@@ -60,14 +63,24 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
       return
     }
 
-    // Validate payment details
-    if (payoutMethod === 'paypal' && !payoutDetails.paypalEmail) {
+    // Validate payment details - trim whitespace
+    const trimmedBankName = payoutDetails.bankName?.trim()
+    const trimmedIban = payoutDetails.iban?.trim()
+    const trimmedPaypalEmail = payoutDetails.paypalEmail?.trim()
+
+    if (payoutMethod === 'paypal' && !trimmedPaypalEmail) {
       alert('Please enter your PayPal email')
       return
     }
-    if (payoutMethod === 'bank_transfer' && (!payoutDetails.bankName || !payoutDetails.iban)) {
-      alert('Please enter bank name and IBAN')
-      return
+    if (payoutMethod === 'bank_transfer') {
+      if (!trimmedBankName) {
+        alert('Please enter bank name')
+        return
+      }
+      if (!trimmedIban) {
+        alert('Please enter IBAN')
+        return
+      }
     }
 
     setPayoutLoading(true)
@@ -79,8 +92,8 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
           amount,
           paymentMethod: payoutMethod,
           paymentDetails: payoutMethod === 'paypal' 
-            ? { paypalEmail: payoutDetails.paypalEmail }
-            : { bankName: payoutDetails.bankName, iban: payoutDetails.iban }
+            ? { paypalEmail: trimmedPaypalEmail }
+            : { bankName: trimmedBankName, iban: trimmedIban }
         })
       })
 
@@ -96,7 +109,8 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
       setPayoutDetails({ paypalEmail: '', bankName: '', iban: '' })
       fetchDashboard()
     } catch (err) {
-      alert(err.message)
+      console.error('Payout request error:', err)
+      alert(err.message || 'Failed to request payout. Please try again.')
     } finally {
       setPayoutLoading(false)
     }
@@ -445,6 +459,7 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
                 Cancel
               </button>
               <button
+                type="button"
                 onClick={handleRequestPayout}
                 disabled={payoutLoading}
                 className="flex-1 btn-primary disabled:opacity-50"

@@ -501,9 +501,10 @@ app.get('/api/referrer/:id/dashboard', async (req, res) => {
     const referrerPayouts = payouts.filter(p => p.referrerId === referrer.id)
     const paidAmount = referrerPayouts.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0)
     const pendingPayoutRequests = referrerPayouts.filter(p => p.status === 'pending')
+    const pendingPayoutAmount = pendingPayoutRequests.reduce((sum, p) => sum + p.amount, 0)
 
-    // Available for payout = confirmed earnings - already paid
-    const availableForPayout = Math.max(0, confirmedEarnings - paidAmount)
+    // Available for payout = confirmed earnings - already paid - pending payout requests
+    const availableForPayout = Math.max(0, confirmedEarnings - paidAmount - pendingPayoutAmount)
 
     res.json({
       referrer: {
