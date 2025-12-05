@@ -1,0 +1,53 @@
+[
+  {
+    "id": "1764709228765-yvjcvabq6",
+    "referrerId": "1764706310100-ix6sjnd3m",
+    "referrerName": "dfgdfgdfg",
+    "referrerEmail": "user@user.com",
+    "amount": 129,
+    "paymentMethod": "bank_transfer",
+    "paymentDetails": {
+      "bankName": "EIB",
+      "accountNumber": "",
+      "iban": "AE5555555"
+    },
+    "status": "paid",
+    "requestedAt": "2025-12-02T21:00:28.765Z",
+    "processedAt": "2025-12-02T21:01:09.542Z",
+    "adminNotes": null,
+    "transactionId": null
+  },
+  {
+    "id": "1764710586322-zhaox5ktp",
+    "referrerId": "1764706310100-ix6sjnd3m",
+    "referrerName": "dfgdfgdfg",
+    "referrerEmail": "user@user.com",
+    "amount": 117,
+    "paymentMethod": "paypal",
+    "paymentDetails": {
+      "paypalEmail": "mark.anthony.rias@gmail.com"
+    },
+    "status": "paid",
+    "requestedAt": "2025-12-02T21:23:06.322Z",
+    "processedAt": "2025-12-02T22:20:32.864Z",
+    "adminNotes": null,
+    "transactionId": null
+  },
+  {
+    "id": "1764714058339-x89yx5rh1",
+    "referrerId": "1764706310100-ix6sjnd3m",
+    "referrerName": "dfgdfgdfg",
+    "referrerEmail": "user@user.com",
+    "amount": 100,
+    "paymentMethod": "bank_transfer",
+    "paymentDetails": {
+      "bankName": "Eib",
+      "iban": "ae3234234"
+    },
+    "status": "rejected",
+    "requestedAt": "2025-12-02T22:20:58.339Z",
+    "processedAt": "2025-12-02T22:21:18.396Z",
+    "adminNotes": "Rejected by admin",
+    "transactionId": null
+  }
+]

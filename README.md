@@ -230,6 +230,16 @@ const EXPORT_SIZE = 2000  // pixels
 
 ## 🚀 Deployment
 
+### For cPanel/Shared Hosting (Namecheap, etc.)
+- See [CPANEL-DEPLOYMENT.md](./CPANEL-DEPLOYMENT.md) for cPanel setup
+- See [BACKEND-DEPLOY.md](./BACKEND-DEPLOY.md) for backend hosting (Railway/Render)
+- **Recommended:** Frontend on cPanel, Backend on Railway.app (free)
+
+### For VPS/Dedicated Server
+- See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete server setup
+- See [DNS-SETUP.md](./DNS-SETUP.md) for domain and email configuration
+
+**Quick start:**
 ```bash
 # Build for production
 npm run build
@@ -238,7 +248,9 @@ npm run build
 npm run preview
 ```
 
-Deploy the `dist/` folder to your hosting provider.
+**Production Info:**
+- Domain: daisyandson.co
+- Emails: info@daisyandson.co, support@daisyandson.co
 
 ## 📱 Pages
 
@@ -254,7 +266,8 @@ Deploy the `dist/` folder to your hosting provider.
 
 ## 📧 Support
 
-For support, email support@daisyandson.com
+For support, email support@daisyandson.co  
+For general inquiries, email info@daisyandson.co
 
 ## 📝 License
 
