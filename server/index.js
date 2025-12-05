@@ -1011,39 +1011,57 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() })
 })
 
-// Root route
-app.get('/', (req, res) => {
-  res.json({
-    name: 'Badge Designer API',
-    version: '1.0.0',
-    status: 'running',
-    endpoints: {
-      saveDesign: 'POST /api/save-design',
-      savePayment: 'POST /api/save-payment',
-      trackReferral: 'POST /api/track-referral',
-      recordConversion: 'POST /api/record-conversion',
-      referralStats: 'GET /api/referral-stats/:id',
-      // Referrer System
-      referrerRegister: 'POST /api/referrer/register',
-      referrerLogin: 'POST /api/referrer/login',
-      referrerDashboard: 'GET /api/referrer/:id/dashboard',
-      referrerRequestPayout: 'POST /api/referrer/:id/request-payout',
-      referrerUpdatePayment: 'PUT /api/referrer/:id/payment-details',
-      // Admin
-      adminReferrers: 'GET /api/admin/referrers',
-      adminPayouts: 'GET /api/admin/payouts',
-      adminProcessPayout: 'PUT /api/admin/payouts/:id',
-      // Other
-      designs: 'GET /api/designs',
-      orders: 'GET /api/orders',
-      health: 'GET /api/health',
-      shippingRates: 'GET /api/shipping/rates',
-      shippingCalculate: 'POST /api/shipping/calculate',
-      shippingCreate: 'POST /api/shipping/create',
-      shippingTrack: 'GET /api/shipping/track/:trackingNumber'
+// Serve static files from React app in production
+if (process.env.NODE_ENV === 'production') {
+  const DIST_DIR = path.join(__dirname, '../dist')
+  
+  // Serve static assets
+  app.use(express.static(DIST_DIR))
+  
+  // Handle React routing - return all non-API requests to React app
+  app.get('*', (req, res) => {
+    // Don't serve index.html for API routes
+    if (req.path.startsWith('/api')) {
+      return res.status(404).json({ error: 'API endpoint not found' })
     }
+    res.sendFile(path.join(DIST_DIR, 'index.html'))
   })
-})
+} else {
+  // Development: API info route
+  app.get('/', (req, res) => {
+    res.json({
+      name: 'Badge Designer API',
+      version: '1.0.0',
+      status: 'running',
+      mode: 'development',
+      endpoints: {
+        saveDesign: 'POST /api/save-design',
+        savePayment: 'POST /api/save-payment',
+        trackReferral: 'POST /api/track-referral',
+        recordConversion: 'POST /api/record-conversion',
+        referralStats: 'GET /api/referral-stats/:id',
+        // Referrer System
+        referrerRegister: 'POST /api/referrer/register',
+        referrerLogin: 'POST /api/referrer/login',
+        referrerDashboard: 'GET /api/referrer/:id/dashboard',
+        referrerRequestPayout: 'POST /api/referrer/:id/request-payout',
+        referrerUpdatePayment: 'PUT /api/referrer/:id/payment-details',
+        // Admin
+        adminReferrers: 'GET /api/admin/referrers',
+        adminPayouts: 'GET /api/admin/payouts',
+        adminProcessPayout: 'PUT /api/admin/payouts/:id',
+        // Other
+        designs: 'GET /api/designs',
+        orders: 'GET /api/orders',
+        health: 'GET /api/health',
+        shippingRates: 'GET /api/shipping/rates',
+        shippingCalculate: 'POST /api/shipping/calculate',
+        shippingCreate: 'POST /api/shipping/create',
+        shippingTrack: 'GET /api/shipping/track/:trackingNumber'
+      }
+    })
+  })
+}
 
 // ============================================
 // SHIPPING ENDPOINTS (Aramex Integration)

@@ -230,6 +230,9 @@ const EXPORT_SIZE = 2000  // pixels
 
 ## 🚀 Deployment
 
+For detailed deployment instructions, see [DEPLOYMENT.md](./DEPLOYMENT.md)
+
+Quick start:
 ```bash
 # Build for production
 npm run build
@@ -238,7 +241,11 @@ npm run build
 npm run preview
 ```
 
-Deploy the `dist/` folder to your hosting provider.
+**Production Deployment:**
+- See [DEPLOYMENT.md](./DEPLOYMENT.md) for complete server setup
+- See [DNS-SETUP.md](./DNS-SETUP.md) for domain and email configuration
+- Domain: daisyandson.co
+- Emails: info@daisyandson.co, support@daisyandson.co
 
 ## 📱 Pages
 
@@ -254,7 +261,8 @@ Deploy the `dist/` folder to your hosting provider.
 
 ## 📧 Support
 
-For support, email support@daisyandson.com
+For support, email support@daisyandson.co  
+For general inquiries, email info@daisyandson.co
 
 ## 📝 License
 

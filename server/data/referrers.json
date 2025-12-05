@@ -1,0 +1,53 @@
+[
+  {
+    "id": "1764705647923-rs5ymiu65",
+    "referralCode": "REFMIP06GJ7KM5",
+    "name": "Test",
+    "email": "test@test.com",
+    "phone": "123456",
+    "paymentMethod": "bank_transfer",
+    "paymentDetails": {},
+    "registeredAt": "2025-12-02T20:00:47.923Z",
+    "status": "active",
+    "totalEarnings": 0,
+    "pendingEarnings": 0,
+    "paidEarnings": 0
+  },
+  {
+    "id": "1764705757748-ha5p8exw4",
+    "referralCode": "REFMIP08T9WPMY",
+    "name": "fdfgdf",
+    "email": "admin@admin.com",
+    "phone": "+97112345678",
+    "paymentMethod": "bank_transfer",
+    "paymentDetails": {
+      "bankName": "EIB",
+      "accountNumber": "",
+      "iban": "AE55555555555"
+    },
+    "registeredAt": "2025-12-02T20:02:37.748Z",
+    "status": "active",
+    "totalEarnings": 0,
+    "pendingEarnings": 0,
+    "paidEarnings": 0
+  },
+  {
+    "id": "1764706310100-ix6sjnd3m",
+    "referralCode": "REFMIP0KNH00O4",
+    "name": "dfgdfgdfg",
+    "email": "user@user.com",
+    "phone": "+971856974",
+    "passwordHash": "MTIzNDU2",
+    "paymentMethod": "bank_transfer",
+    "paymentDetails": {
+      "bankName": "EIB",
+      "accountNumber": "",
+      "iban": "AE5555555"
+    },
+    "registeredAt": "2025-12-02T20:11:50.100Z",
+    "status": "active",
+    "totalEarnings": 0,
+    "pendingEarnings": 0,
+    "paidEarnings": 0
+  }
+]
