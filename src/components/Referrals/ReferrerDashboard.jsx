@@ -19,21 +19,41 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
 
   const fetchDashboard = useCallback(async () => {
     try {
+      if (!referrer || !referrer.id) {
+        console.error('Referrer data missing:', referrer)
+        setError('Referrer data is missing. Please login again.')
+        setLoading(false)
+        return
+      }
+      
+      console.log('Fetching dashboard for referrer ID:', referrer.id)
       const response = await fetch(`/api/referrer/${referrer.id}/dashboard`)
       const data = await response.json()
       
       if (!response.ok) {
+        console.error('Dashboard fetch failed:', data)
+        // If referrer not found, clear localStorage and logout
+        if (data.error === 'Referrer not found' || response.status === 404) {
+          localStorage.removeItem('referrer_data')
+          localStorage.removeItem('referrer_id')
+          // Logout and redirect to login
+          setTimeout(() => {
+            if (onLogout) onLogout()
+          }, 2000)
+          throw new Error('Your session has expired. Redirecting to login...')
+        }
         throw new Error(data.error || 'Failed to load dashboard')
       }
       
       setDashboard(data)
       setCurrentPage(1) // Reset to first page when data changes
     } catch (err) {
+      console.error('Error fetching dashboard:', err)
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }, [referrer.id])
+  }, [referrer?.id])
 
   useEffect(() => {
     fetchDashboard()
