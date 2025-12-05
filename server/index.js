@@ -437,7 +437,7 @@ app.post('/api/referrer/login', async (req, res) => {
     const paidAmount = referrerPayouts.filter(p => p.status === 'paid').reduce((sum, p) => sum + p.amount, 0)
     const pendingAmount = earnings - paidAmount
 
-    console.log('Referrer login:', email)
+    console.log('Referrer login:', email, 'ID:', referrer.id)
 
     res.json({
       success: true,
@@ -474,10 +474,14 @@ app.post('/api/referrer/login', async (req, res) => {
 app.get('/api/referrer/:id/dashboard', async (req, res) => {
   try {
     const { id } = req.params
+    console.log('Dashboard request - Looking for referrer ID:', id)
     const referrers = readJsonFile(REFERRERS_FILE)
+    console.log('Total referrers in database:', referrers.length)
+    console.log('Referrer IDs in database:', referrers.map(r => r.id))
     const referrer = referrers.find(r => r.id === id)
 
     if (!referrer) {
+      console.log('Referrer not found with ID:', id)
       return res.status(404).json({ error: 'Referrer not found' })
     }
 
