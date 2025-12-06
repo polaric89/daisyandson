@@ -130,7 +130,7 @@ function OrderTracking({ onBack }) {
                   : 'bg-badge-beige text-badge-primary/70 hover:bg-badge-primary/10'
               }`}
             >
-              PayPal Email
+              Email Address
             </button>
           </div>
 
@@ -140,7 +140,7 @@ function OrderTracking({ onBack }) {
               type={searchType === 'email' ? 'email' : 'text'}
               value={searchValue}
               onChange={(e) => setSearchValue(e.target.value)}
-              placeholder={searchType === 'orderId' ? 'Enter your Order ID' : 'Enter your PayPal email'}
+              placeholder={searchType === 'orderId' ? 'Enter your Order ID' : 'Enter your email address'}
               className="flex-1 px-4 py-3 border border-badge-primary/20 rounded-xl focus:outline-none focus:ring-2 focus:ring-badge-primary/20 focus:border-badge-primary bg-white"
             />
             <button
@@ -269,8 +269,8 @@ function OrderTracking({ onBack }) {
                 )}
               </div>
 
-              {/* Aramex Tracking */}
-              {order.shipping?.trackingNumber && (
+              {/* Aramex Shipping Info */}
+              {order.shipping && (order.shipping.carrier === 'Aramex' || order.shipping.trackingNumber) && (
                 <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 rounded-lg bg-white shadow flex items-center justify-center">
@@ -278,32 +278,44 @@ function OrderTracking({ onBack }) {
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-800">Aramex Shipping</p>
-                      <p className="text-xs text-gray-500">{order.shipping.estimatedDelivery || 'In transit'}</p>
+                      <p className="text-xs text-gray-500">
+                        {order.shipping.estimatedDelivery || order.shipping.deliveryTime || 'Preparing for shipment'}
+                      </p>
                     </div>
                   </div>
                   
-                  <div className="bg-white rounded-lg p-3 mb-3">
-                    <p className="text-xs text-gray-500 mb-1">Tracking Number</p>
-                    <p className="font-mono text-sm font-bold text-gray-800 select-all">
-                      {order.shipping.trackingNumber}
-                    </p>
-                  </div>
+                  {order.shipping.trackingNumber && (
+                    <>
+                      <div className="bg-white rounded-lg p-3 mb-3">
+                        <p className="text-xs text-gray-500 mb-1">Tracking Number</p>
+                        <p className="font-mono text-sm font-bold text-gray-800 select-all">
+                          {order.shipping.trackingNumber}
+                        </p>
+                      </div>
 
-                  <a
-                    href={`https://www.aramex.com/track/results?ShipmentNumber=${order.shipping.trackingNumber}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium text-sm hover:from-orange-600 hover:to-red-600 transition-all"
-                  >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    Track on Aramex
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
+                      <a
+                        href={`https://www.aramex.com/track/results?ShipmentNumber=${order.shipping.trackingNumber}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium text-sm hover:from-orange-600 hover:to-red-600 transition-all"
+                      >
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Track on Aramex
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </a>
+                    </>
+                  )}
+                  
+                  {!order.shipping.trackingNumber && (
+                    <div className="bg-white rounded-lg p-3 text-center">
+                      <p className="text-xs text-gray-600">Tracking number will be available once your order ships.</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -346,7 +358,7 @@ function OrderTracking({ onBack }) {
               </svg>
             </div>
             <p className="text-badge-primary/60">No order found with that {searchType === 'orderId' ? 'Order ID' : 'email'}.</p>
-            <p className="text-sm text-badge-primary/40 mt-2">Double-check your {searchType === 'orderId' ? 'Order ID' : 'PayPal email'} and try again.</p>
+            <p className="text-sm text-badge-primary/40 mt-2">Double-check your {searchType === 'orderId' ? 'Order ID' : 'email address'} and try again.</p>
           </div>
         )}
       </main>

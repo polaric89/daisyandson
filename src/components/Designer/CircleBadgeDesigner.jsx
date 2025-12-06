@@ -82,14 +82,16 @@ const CircleBadgeDesigner = forwardRef(({ onDesignChange, onExport, onRemove }, 
 
   // Track export timeout
   const exportTimeoutRef = useRef(null)
-  // Store onExport in ref to avoid dependency issues
+  // Store callbacks in refs to avoid dependency issues
   const onExportRef = useRef(onExport)
+  const onDesignChangeRef = useRef(onDesignChange)
   onExportRef.current = onExport
+  onDesignChangeRef.current = onDesignChange
 
   // Notify parent of design changes
   useEffect(() => {
-    if (onDesignChange) {
-      onDesignChange({
+    if (onDesignChangeRef.current) {
+      onDesignChangeRef.current({
         hasImage: !!image,
         position,
         zoom,
@@ -97,7 +99,7 @@ const CircleBadgeDesigner = forwardRef(({ onDesignChange, onExport, onRemove }, 
         imageSize
       })
     }
-  }, [image, position, zoom, rotation, imageSize, onDesignChange])
+  }, [image, position, zoom, rotation, imageSize])
 
   // Auto-export when design changes and has image
   useEffect(() => {

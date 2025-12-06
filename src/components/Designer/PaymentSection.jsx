@@ -43,7 +43,7 @@ const PaymentSection = memo(function PaymentSection({
             {shippingRate && (
               <div className="flex justify-between text-sm">
                 <span className="text-badge-primary/70">
-                  🚚 Shipping ({shippingRate.name})
+                  📦 Aramex Shipping ({shippingRate.name || shippingRate.carrier || 'Standard'})
                 </span>
                 <span className="text-badge-primary">
                   {shippingRate.price} AED

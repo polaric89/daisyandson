@@ -26,24 +26,56 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
       
       console.log('Fetching dashboard for referrer ID:', referrer.id)
       const response = await fetch(`/api/referrer/${referrer.id}/dashboard`)
+      
+      // Check if response is actually JSON (not HTML error page)
+      const contentType = response.headers.get('content-type')
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text()
+        console.error('Non-JSON response received:', text.substring(0, 500))
+        throw new Error('Server returned an error. Please check your connection and try again.')
+      }
+      
       const data = await response.json()
       
       if (!response.ok) {
         console.error('Dashboard fetch failed:', data)
+        console.error('Response status:', response.status)
+        console.error('Referrer object:', referrer)
         // If referrer not found, clear localStorage and logout
         if (data.error === 'Referrer not found' || response.status === 404) {
           localStorage.removeItem('referrer_data')
           localStorage.removeItem('referrer_id')
-          // Logout and redirect to login
-          setTimeout(() => {
-            if (onLogout) onLogout()
-          }, 2000)
-          throw new Error('Your session has expired. Redirecting to login...')
+          // Show a more helpful error message - user needs to register first
+          throw new Error('Account not found in database. Please register first before logging in.')
         }
         throw new Error(data.error || 'Failed to load dashboard')
       }
       
-      setDashboard(data)
+      console.log('Dashboard data received:', data)
+      
+      // Validate data structure
+      if (!data.stats) {
+        console.error('Invalid dashboard data structure:', data)
+        throw new Error('Invalid dashboard data received from server')
+      }
+      
+      // Ensure all required stats properties exist with defaults
+      const safeData = {
+        ...data,
+        stats: {
+          totalClicks: data.stats?.totalClicks || 0,
+          totalConversions: data.stats?.totalConversions || 0,
+          completedConversions: data.stats?.completedConversions || 0,
+          confirmedEarnings: data.stats?.confirmedEarnings || 0,
+          pendingConfirmation: data.stats?.pendingConfirmation || 0,
+          pendingEarnings: data.stats?.pendingEarnings || 0,
+          ...data.stats
+        },
+        recentConversions: data.recentConversions || [],
+        payouts: data.payouts || []
+      }
+      
+      setDashboard(safeData)
     } catch (err) {
       console.error('Error fetching dashboard:', err)
       setError(err.message)
@@ -56,7 +88,9 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
     fetchDashboard()
   }, [fetchDashboard])
 
-  const referralLink = `${window.location.origin}?ref=${referrer.referralCode}`
+  const referralLink = referrer?.referralCode 
+    ? `${window.location.origin}?ref=${referrer.referralCode}`
+    : null
 
   const handleCopyLink = async () => {
     try {
@@ -78,8 +112,14 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
       return
     }
 
-    if (amount > dashboard.stats.pendingEarnings) {
-      alert(`Maximum available: ${dashboard.stats.pendingEarnings.toFixed(2)} AED`)
+    if (!dashboard?.stats?.pendingEarnings) {
+      alert('Dashboard data not loaded. Please wait and try again.')
+      return
+    }
+    
+    const availableEarnings = dashboard?.stats?.pendingEarnings || 0
+    if (amount > availableEarnings) {
+      alert(`Maximum available: ${availableEarnings.toFixed(2)} AED`)
       return
     }
 
@@ -155,10 +195,21 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-badge-cream flex items-center justify-center">
-        <div className="text-center">
+      <div className="min-h-screen bg-badge-cream flex items-center justify-center p-4">
+        <div className="text-center max-w-md">
           <p className="text-red-500 mb-4">{error}</p>
           <button onClick={onBack} className="btn-secondary">Go Back</button>
+        </div>
+      </div>
+    )
+  }
+
+  if (!dashboard || !referrer || !dashboard.stats) {
+    return (
+      <div className="min-h-screen bg-badge-cream flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-badge-primary border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-badge-primary/60">Loading dashboard data...</p>
         </div>
       </div>
     )
@@ -175,7 +226,7 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
             </button>
             <div>
               <h1 className="font-display text-xl font-bold text-badge-primary">Referrer Dashboard</h1>
-              <p className="text-sm text-badge-primary/60">Welcome, {referrer.name}</p>
+              <p className="text-sm text-badge-primary/60">Welcome, {referrer?.name || 'User'}</p>
             </div>
           </div>
           <button onClick={handleLogout} className="btn-secondary text-sm">
@@ -186,25 +237,25 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <div className="glass-card p-4 text-center">
-            <p className="text-3xl font-bold text-badge-primary">{dashboard.stats.totalClicks}</p>
+            <p className="text-3xl font-bold text-badge-primary">{dashboard?.stats?.totalClicks || 0}</p>
             <p className="text-sm text-badge-primary/60">Total Clicks</p>
           </div>
           <div className="glass-card p-4 text-center">
-            <p className="text-3xl font-bold text-badge-primary">{dashboard.stats.totalConversions}</p>
+            <p className="text-3xl font-bold text-badge-primary">{dashboard?.stats?.totalConversions || 0}</p>
             <p className="text-sm text-badge-primary/60">Orders</p>
-            {dashboard.stats.completedConversions > 0 && (
-              <p className="text-xs text-green-600">{dashboard.stats.completedConversions} completed</p>
+            {(dashboard?.stats?.completedConversions || 0) > 0 && (
+              <p className="text-xs text-green-600">{(dashboard?.stats?.completedConversions || 0)} completed</p>
             )}
           </div>
           <div className="glass-card p-4 text-center">
-            <p className="text-3xl font-bold text-badge-secondary">{(dashboard.stats.confirmedEarnings || 0).toFixed(2)}</p>
+            <p className="text-3xl font-bold text-badge-secondary">{(dashboard?.stats?.confirmedEarnings || 0).toFixed(2)}</p>
             <p className="text-sm text-badge-primary/60">Confirmed (AED)</p>
-            {dashboard.stats.pendingConfirmation > 0 && (
-              <p className="text-xs text-amber-600">+{dashboard.stats.pendingConfirmation.toFixed(2)} pending</p>
+            {(dashboard?.stats?.pendingConfirmation || 0) > 0 && (
+              <p className="text-xs text-amber-600">+{((dashboard?.stats?.pendingConfirmation) || 0).toFixed(2)} pending</p>
             )}
           </div>
           <div className="glass-card p-4 text-center">
-            <p className="text-3xl font-bold text-green-600">{dashboard.stats.pendingEarnings.toFixed(2)}</p>
+            <p className="text-3xl font-bold text-green-600">{((dashboard?.stats?.pendingEarnings) || 0).toFixed(2)}</p>
             <p className="text-sm text-badge-primary/60">Available (AED)</p>
           </div>
         </div>
@@ -220,23 +271,24 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
           <div className="flex gap-2">
             <input
               type="text"
-              value={referralLink}
+              value={referralLink || ''}
               readOnly
               className="flex-1 px-4 py-2.5 border border-badge-primary/20 rounded-xl bg-white/50 font-mono text-sm"
             />
             <button
               onClick={handleCopyLink}
+              disabled={!referralLink}
               className={`px-6 py-2.5 rounded-xl font-medium transition-colors ${
                 copied 
                   ? 'bg-green-500 text-white' 
-                  : 'bg-badge-primary text-white hover:bg-badge-primary/90'
+                  : 'bg-badge-primary text-white hover:bg-badge-primary/90 disabled:opacity-50'
               }`}
             >
               {copied ? '✓ Copied!' : 'Copy'}
             </button>
           </div>
           <p className="text-xs text-badge-primary/50 mt-2">
-            Your code: <span className="font-mono font-medium text-badge-secondary">{referrer.referralCode}</span>
+            Your code: <span className="font-mono font-medium text-badge-secondary">{referrer?.referralCode || dashboard?.referrer?.referralCode || 'Loading...'}</span>
           </p>
         </div>
 
@@ -251,32 +303,32 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
             </h2>
             <button
               onClick={() => setShowPayoutModal(true)}
-              disabled={dashboard.stats.pendingEarnings < 50}
+              disabled={(dashboard?.stats?.pendingEarnings || 0) < 50}
               className="btn-primary text-sm disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Request Payout
             </button>
           </div>
 
-          {dashboard.stats.pendingEarnings < 50 && (
+          {(dashboard?.stats?.pendingEarnings || 0) < 50 && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm mb-4">
-              Minimum payout is 50 AED. You need {(50 - dashboard.stats.pendingEarnings).toFixed(2)} AED more.
+              Minimum payout is 50 AED. You need {(50 - (dashboard?.stats?.pendingEarnings || 0)).toFixed(2)} AED more.
               <p className="text-xs mt-1 text-amber-600">Note: Only earnings from completed orders are eligible for payout.</p>
             </div>
           )}
 
           {/* Payout History */}
-          {dashboard.payouts.length > 0 ? (
+          {(dashboard?.payouts || []).length > 0 ? (
             <div className="space-y-3">
-              {dashboard.payouts.map((payout) => (
+              {(dashboard?.payouts || []).map((payout) => (
                 <div 
                   key={payout.id} 
                   className="flex items-center justify-between p-3 bg-badge-primary/5 rounded-xl"
                 >
                   <div>
-                    <p className="font-medium text-badge-primary">{payout.amount.toFixed(2)} AED</p>
+                    <p className="font-medium text-badge-primary">{((payout.amount || 0)).toFixed(2)} AED</p>
                     <p className="text-xs text-badge-primary/50">
-                      {new Date(payout.requestedAt).toLocaleDateString()}
+                      {payout.requestedAt ? new Date(payout.requestedAt).toLocaleDateString() : 'N/A'}
                     </p>
                   </div>
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -307,7 +359,7 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
             Recent Conversions
           </h2>
 
-          {dashboard.referredOrders.length > 0 ? (
+          {(dashboard?.recentConversions || []).length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
@@ -320,12 +372,12 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {dashboard.referredOrders.slice(0, 10).map((order) => (
+                  {(dashboard?.recentConversions || []).slice(0, 10).map((order) => (
                     <tr key={order.orderId} className="border-b border-badge-primary/5">
-                      <td className="py-3 font-mono text-sm">{order.orderId.slice(-8)}</td>
-                      <td className="py-3">{order.amount.toFixed(2)} AED</td>
+                      <td className="py-3 font-mono text-sm">{order.orderId?.slice(-8) || 'N/A'}</td>
+                      <td className="py-3">{((order.amount || 0)).toFixed(2)} AED</td>
                       <td className="py-3 text-badge-secondary font-medium">
-                        +{order.commission.toFixed(2)} AED
+                        +{((order.commission || 0)).toFixed(2)} AED
                       </td>
                       <td className="py-3">
                         <span className={`px-2 py-0.5 rounded text-xs ${
@@ -369,7 +421,7 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
             
             <div className="mb-4">
               <p className="text-sm text-badge-primary/60 mb-2">
-                Available balance: <span className="font-bold text-green-600">{dashboard.stats.pendingEarnings.toFixed(2)} AED</span>
+                Available balance: <span className="font-bold text-green-600">{(dashboard?.stats?.pendingEarnings || 0).toFixed(2)} AED</span>
               </p>
               <label className="block text-sm font-medium text-badge-primary mb-1">
                 Amount (AED) <span className="text-red-500">*</span>
@@ -377,7 +429,7 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
               <input
                 type="number"
                 min="50"
-                max={dashboard.stats.pendingEarnings}
+                max={dashboard?.stats?.pendingEarnings || 0}
                 value={payoutAmount}
                 onChange={(e) => setPayoutAmount(e.target.value)}
                 placeholder="Minimum 50 AED"

@@ -58,7 +58,12 @@ function CategoryModal({ isOpen, onSelect, onClose }) {
       <div className="relative bg-badge-cream rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden animate-in zoom-in-95 duration-200 border border-badge-primary/10">
         {/* Header */}
         <div className="p-6 pb-4 text-center border-b border-badge-primary/10">
-          <img src="/images/ds_logo.png" alt="Daisy & Son Co." className="h-16 w-auto mx-auto mb-4" />
+          <img 
+            src="/images/ds_logo.png" 
+            alt="Daisy & Son Co." 
+            className="h-16 w-auto mx-auto mb-4"
+            loading="eager"
+          />
           <h2 className="font-display text-2xl font-semibold text-badge-primary">
             What's this badge for?
           </h2>

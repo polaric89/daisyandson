@@ -89,11 +89,12 @@ daisy-and-son/
 │   ├── App.jsx
 │   ├── main.jsx
 │   └── index.css
-├── server/
-│   ├── index.js                      # Express API
-│   ├── services/
-│   │   └── aramex.js                 # Shipping integration
-│   ├── data/                         # JSON storage
+├── php-api/                          # PHP + MySQL Backend API
+│   ├── config.php                    # Database configuration
+│   ├── index.php                     # API router
+│   ├── endpoints/                    # API endpoints
+│   ├── database/
+│   │   └── schema.sql                # Database schema
 │   └── uploads/                      # Design exports
 ├── public/
 │   └── images/
@@ -108,8 +109,10 @@ daisy-and-son/
 ## 🛠️ Installation
 
 ### Prerequisites
-- Node.js 18+
+- Node.js 18+ (for frontend only)
 - npm or pnpm
+- PHP 7.4+ with MySQL (for backend)
+- XAMPP/WAMP/MAMP (for local development)
 
 ### Setup
 
@@ -124,28 +127,22 @@ daisy-and-son/
    npm install
    ```
 
-3. **Install server dependencies**
-   ```bash
-   cd server
-   npm install
-   cd ..
-   ```
+3. **Setup PHP Backend**
+   - See `php-api/LOCAL-SETUP.md` for detailed instructions
+   - Create database in phpMyAdmin
+   - Import `php-api/database/schema.sql`
+   - Update `php-api/config.php` with database credentials
 
 4. **Set up environment variables**
    ```bash
    cp env.example .env
-   # Edit .env with your PayPal credentials
+   # Edit .env with your PayPal credentials and API URL
    ```
 
-5. **Start development servers**
+5. **Start development**
 
-   Terminal 1 - Backend:
-   ```bash
-   cd server
-   npm start
-   ```
-
-   Terminal 2 - Frontend:
+   - Start Apache and MySQL (XAMPP/WAMP/MAMP)
+   - Start Frontend:
    ```bash
    npm run dev
    ```
@@ -155,29 +152,24 @@ daisy-and-son/
    http://localhost:3000
    ```
 
-## 📡 API Endpoints
+## 📡 Backend API
 
-### Orders
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/save-design` | Save order with designs |
-| GET | `/api/orders` | List all orders (admin) |
-| GET | `/api/orders/track/:id` | Track order by ID |
-| PATCH | `/api/orders/:id/status` | Update order status |
-| DELETE | `/api/orders/:id` | Delete order |
+The backend is built with **PHP + MySQL**. See `php-api/` folder for:
+- Database schema (`database/schema.sql`)
+- API endpoints (`endpoints/`)
+- Setup instructions (`LOCAL-SETUP.md`)
 
-### Shipping
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/shipping/rate/:country` | Get shipping rate |
-| POST | `/api/shipping/create` | Create Aramex shipment |
+### API Endpoints
 
-### Referrals
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/track-referral` | Track referral click |
-| POST | `/api/record-conversion` | Record referral sale |
-| GET | `/api/referral-stats/:id` | Get referral stats |
+All endpoints are available at: `http://localhost/php-api/api/...`
+
+- `POST /api/save-design` - Save order with designs
+- `GET /api/orders` - List all orders (admin)
+- `GET /api/orders/track/:id` - Track order by ID
+- `POST /api/referrer/register` - Register as referrer
+- `POST /api/referrer/login` - Login as referrer
+- `GET /api/referrer/:id/dashboard` - Get referrer dashboard
+- And more... (see `php-api/README.md`)
 
 ## 🎯 User Flow
 
@@ -230,6 +222,7 @@ const EXPORT_SIZE = 2000  // pixels
 
 ## 🚀 Deployment
 
+### Frontend
 ```bash
 # Build for production
 npm run build
@@ -239,6 +232,13 @@ npm run preview
 ```
 
 Deploy the `dist/` folder to your hosting provider.
+
+### Backend
+The PHP backend can be deployed to any PHP hosting (shared hosting, VPS, etc.):
+- Upload `php-api/` folder to your server
+- Import database schema
+- Update `config.php` with production database credentials
+- See `php-api/LOCAL-SETUP.md` for details
 
 ## 📱 Pages
 

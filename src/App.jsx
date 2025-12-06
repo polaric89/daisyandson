@@ -92,8 +92,18 @@ function App() {
   // Extended back to home handler
   const handleBackToHomeExtended = useCallback(() => {
     resetOrder()
+    resetBuyerInfo()
+    resetShipping()
     handleBackToHome()
-  }, [resetOrder, handleBackToHome])
+  }, [resetOrder, resetBuyerInfo, resetShipping, handleBackToHome])
+
+  // Extended category select handler - reset order state when starting new order
+  const handleCategorySelectExtended = useCallback((category) => {
+    resetOrder()
+    resetBuyerInfo()
+    resetShipping()
+    handleCategorySelect(category)
+  }, [resetOrder, resetBuyerInfo, resetShipping, handleCategorySelect])
 
   // Referrer login handler
   const handleReferrerLogin = useCallback((referrer, stats) => {
@@ -175,7 +185,7 @@ function App() {
         />
         <CategoryModal 
           isOpen={showCategoryModal}
-          onSelect={handleCategorySelect}
+          onSelect={handleCategorySelectExtended}
           onClose={handleCategoryModalClose}
         />
       </>

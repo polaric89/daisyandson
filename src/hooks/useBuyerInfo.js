@@ -2,6 +2,7 @@ import { useState, useCallback, useMemo } from 'react'
 
 const initialBuyerInfo = {
   name: '',
+  email: '',
   phone: '',
   address: '',
   city: '',
@@ -27,6 +28,11 @@ export function useBuyerInfo() {
     if (!buyerInfo.name.trim()) {
       newErrors.name = 'Name is required'
     }
+    if (!buyerInfo.email.trim()) {
+      newErrors.email = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(buyerInfo.email)) {
+      newErrors.email = 'Please enter a valid email address'
+    }
     if (!buyerInfo.phone.trim()) {
       newErrors.phone = 'Phone number is required'
     }
@@ -42,8 +48,8 @@ export function useBuyerInfo() {
   }, [buyerInfo])
 
   const isComplete = useMemo(() => {
-    return !!(buyerInfo.name && buyerInfo.phone && buyerInfo.city && buyerInfo.address)
-  }, [buyerInfo.name, buyerInfo.phone, buyerInfo.city, buyerInfo.address])
+    return !!(buyerInfo.name && buyerInfo.email && buyerInfo.phone && buyerInfo.city && buyerInfo.address)
+  }, [buyerInfo.name, buyerInfo.email, buyerInfo.phone, buyerInfo.city, buyerInfo.address])
 
   const reset = useCallback(() => {
     setBuyerInfo(initialBuyerInfo)

@@ -48,6 +48,7 @@ export function useOrder() {
           grandTotal: currentOrderData.pricing.total + (shippingRate?.price || 0)
         },
         payment: paymentDetails,
+        buyerInfo: buyerInfo, // Send buyerInfo separately as backend expects it
         shipping: {
           ...buyerInfo,
           method: shippingRate?.name || 'Standard',

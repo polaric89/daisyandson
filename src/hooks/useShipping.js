@@ -17,18 +17,29 @@ export function useShipping(country) {
         if (response.ok) {
           const data = await response.json()
           setShippingRate(data)
+        } else {
+          // If API fails, use fallback rates
+          console.warn('Shipping API returned non-OK status, using fallback rates')
+          setShippingRate({
+            name: country === 'AE' ? 'Standard Shipping (UAE)' : 'International Standard',
+            price: country === 'AE' ? 15 : 45,
+            currency: 'AED',
+            carrier: 'Aramex',
+            deliveryTime: country === 'AE' ? '3-5 business days' : '7-14 business days'
+          })
         }
       } catch (error) {
         console.error('Failed to fetch shipping rate:', error)
         // Fallback rates
         setShippingRate({
-          name: country === 'AE' ? 'UAE Domestic' : 'International',
-          price: country === 'AE' ? 25 : 85,
+          name: country === 'AE' ? 'Standard Shipping (UAE)' : 'International Standard',
+          price: country === 'AE' ? 15 : 45,
           currency: 'AED',
-          deliveryTime: country === 'AE' ? '1-2 business days' : '5-10 business days'
+          deliveryTime: country === 'AE' ? '3-5 business days' : '7-14 business days'
         })
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
     
     fetchShippingRate()

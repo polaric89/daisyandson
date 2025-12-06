@@ -17,6 +17,40 @@ const ShippingForm = memo(function ShippingForm({
         Delivery Information
       </h2>
       
+      {/* Aramex Shipping - Prominent Display */}
+      <div className="mb-6 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border-2 border-orange-300 shadow-sm">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-lg bg-white shadow flex items-center justify-center">
+              <span className="text-xl">📦</span>
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-800">Aramex Shipping</p>
+              {shippingRate ? (
+                <>
+                  <p className="text-xs text-gray-600">{shippingRate.name}</p>
+                  <p className="text-xs text-gray-500">{shippingRate.deliveryTime}</p>
+                </>
+              ) : (
+                <p className="text-xs text-gray-500">Select country to see shipping rate</p>
+              )}
+            </div>
+          </div>
+          <div className="text-right">
+            {loadingShipping ? (
+              <div className="w-5 h-5 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+            ) : shippingRate ? (
+              <>
+                <p className="text-lg font-bold text-orange-600">{shippingRate.price} AED</p>
+                <p className="text-xs text-gray-500">via Aramex</p>
+              </>
+            ) : (
+              <p className="text-xs text-gray-400">—</p>
+            )}
+          </div>
+        </div>
+      </div>
+      
       <div className="space-y-4">
         {/* Name */}
         <div>
@@ -33,6 +67,23 @@ const ShippingForm = memo(function ShippingForm({
             }`}
           />
           {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
+        </div>
+
+        {/* Email */}
+        <div>
+          <label className="block text-sm font-medium text-badge-primary mb-1">
+            Email Address <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="email"
+            value={buyerInfo.email}
+            onChange={(e) => onUpdateField('email', e.target.value)}
+            placeholder="your@email.com"
+            className={`w-full px-4 py-2.5 border rounded-xl focus:outline-none focus:ring-2 focus:ring-badge-primary/20 ${
+              errors.email ? 'border-red-400' : 'border-badge-primary/20'
+            }`}
+          />
+          {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
         </div>
 
         {/* Phone */}
@@ -105,31 +156,6 @@ const ShippingForm = memo(function ShippingForm({
             {errors.city && <p className="text-red-500 text-xs mt-1">{errors.city}</p>}
           </div>
         </div>
-
-        {/* Shipping Rate Display */}
-        {shippingRate && (
-          <div className="p-3 bg-gradient-to-r from-badge-primary/5 to-badge-secondary/5 rounded-xl border border-badge-primary/10">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-lg">🚚</span>
-                <div>
-                  <p className="text-sm font-medium text-badge-primary">{shippingRate.name}</p>
-                  <p className="text-xs text-badge-primary/60">{shippingRate.deliveryTime}</p>
-                </div>
-              </div>
-              <div className="text-right">
-                {loadingShipping ? (
-                  <div className="w-5 h-5 border-2 border-badge-primary border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <p className="text-lg font-bold text-badge-secondary">{shippingRate.price} AED</p>
-                    <p className="text-xs text-badge-primary/50">via Aramex</p>
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* Address */}
         <div>
