@@ -164,133 +164,154 @@ try {
         sendJSON(['error' => 'Order not found', 'debug' => $debugInfo], 404);
     }
     
-    // Get the most recent order (or first match if multiple)
-    $orderId = $matchingOrderIds[0];
-    if (count($matchingOrderIds) > 1) {
-        // Get the most recent order
-        $placeholders = str_repeat('?,', count($matchingOrderIds) - 1) . '?';
-        $recentStmt = $db->prepare("SELECT id FROM orders WHERE id IN ($placeholders) ORDER BY timestamp DESC LIMIT 1");
-        $recentStmt->execute($matchingOrderIds);
-        $recentOrder = $recentStmt->fetch();
-        if ($recentOrder) {
-            $orderId = $recentOrder['id'];
+    // Helper function to format a single order with all its data
+    function formatOrder($orderId, $db) {
+        // Get order
+        $stmt = $db->prepare("SELECT * FROM orders WHERE id = ?");
+        $stmt->execute([$orderId]);
+        $order = $stmt->fetch();
+        
+        if (!$order) {
+            return null;
         }
-    }
-    
-    // Get order
-    $stmt = $db->prepare("SELECT * FROM orders WHERE id = ?");
-    $stmt->execute([$orderId]);
-    $order = $stmt->fetch();
-    
-    if (!$order) {
-        sendJSON(['error' => 'Order not found'], 404);
-    }
-    
-    // Get designs with image loading from files
-    $designsStmt = $db->prepare("SELECT design_data, image_path FROM designs WHERE order_id = ? ORDER BY id");
-    $designsStmt->execute([$orderId]);
-    $designs = [];
-    $designRows = $designsStmt->fetchAll();
-    
-    foreach ($designRows as $designRow) {
-        $designData = json_decode($designRow['design_data'], true);
-        if ($designData) {
-            // Check if base64 image exists and is valid
-            $hasValidBase64 = isset($designData['image']) && 
-                             !empty($designData['image']) && 
-                             strlen($designData['image']) > 100 &&
-                             strpos($designData['image'], 'data:image') === 0;
-            
-            // If no valid base64, try to load from file
-            if (!$hasValidBase64) {
-                $fileName = null;
-                $filePath = null;
+        
+        // Get designs with image loading from files
+        $designsStmt = $db->prepare("SELECT design_data, image_path FROM designs WHERE order_id = ? ORDER BY id");
+        $designsStmt->execute([$orderId]);
+        $designs = [];
+        $designRows = $designsStmt->fetchAll();
+        
+        foreach ($designRows as $designRow) {
+            $designData = json_decode($designRow['design_data'], true);
+            if ($designData) {
+                // Check if base64 image exists and is valid
+                $hasValidBase64 = isset($designData['image']) && 
+                                 !empty($designData['image']) && 
+                                 strlen($designData['image']) > 100 &&
+                                 strpos($designData['image'], 'data:image') === 0;
                 
-                // Try stored image_path first
-                if ($designRow['image_path']) {
-                    $fileName = basename($designRow['image_path']);
-                    $filePath = UPLOAD_DIR . $fileName;
-                }
-                
-                // If file doesn't exist, search by order ID pattern
-                if (!$filePath || !file_exists($filePath)) {
-                    $orderIdParts = explode('-', $orderId);
-                    $timestamp = $orderIdParts[0] ?? '';
-                    $hash = $orderIdParts[1] ?? '';
+                // If no valid base64, try to load from file
+                if (!$hasValidBase64) {
+                    $fileName = null;
+                    $filePath = null;
                     
-                    // Try multiple patterns
-                    $patterns = [
-                        UPLOAD_DIR . $orderId . '-design-*.png',
-                        UPLOAD_DIR . '*' . $hash . '*design*.png',
-                        UPLOAD_DIR . '*' . $timestamp . '*design*.png'
-                    ];
+                    // Try stored image_path first
+                    if ($designRow['image_path']) {
+                        $fileName = basename($designRow['image_path']);
+                        $filePath = UPLOAD_DIR . $fileName;
+                    }
                     
-                    foreach ($patterns as $pattern) {
-                        $matches = glob($pattern);
-                        if (!empty($matches)) {
-                            $filePath = $matches[0];
-                            $fileName = basename($filePath);
-                            break;
+                    // If file doesn't exist, search by order ID pattern
+                    if (!$filePath || !file_exists($filePath)) {
+                        $orderIdParts = explode('-', $orderId);
+                        $timestamp = $orderIdParts[0] ?? '';
+                        $hash = $orderIdParts[1] ?? '';
+                        
+                        // Try multiple patterns
+                        $patterns = [
+                            UPLOAD_DIR . $orderId . '-design-*.png',
+                            UPLOAD_DIR . '*' . $hash . '*design*.png',
+                            UPLOAD_DIR . '*' . $timestamp . '*design*.png'
+                        ];
+                        
+                        foreach ($patterns as $pattern) {
+                            $matches = glob($pattern);
+                            if (!empty($matches)) {
+                                $filePath = $matches[0];
+                                $fileName = basename($filePath);
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Load image from file
+                    if ($filePath && file_exists($filePath)) {
+                        $imageData = file_get_contents($filePath);
+                        if ($imageData !== false) {
+                            $designData['image'] = 'data:image/png;base64,' . base64_encode($imageData);
                         }
                     }
                 }
                 
-                // Load image from file
-                if ($filePath && file_exists($filePath)) {
-                    $imageData = file_get_contents($filePath);
+                // Only add design if it has a valid image
+                if (isset($designData['image']) && !empty($designData['image']) && strlen($designData['image']) > 100) {
+                    $designs[] = $designData;
+                }
+            }
+        }
+        
+        // If no designs found, try to find image files
+        if (empty($designs)) {
+            $orderIdParts = explode('-', $orderId);
+            $hash = $orderIdParts[1] ?? '';
+            $pattern = UPLOAD_DIR . '*' . $hash . '*design*.png';
+            $imageFiles = glob($pattern);
+            foreach ($imageFiles as $imageFile) {
+                if (file_exists($imageFile)) {
+                    $fileName = basename($imageFile);
+                    $imageData = file_get_contents($imageFile);
                     if ($imageData !== false) {
-                        $designData['image'] = 'data:image/png;base64,' . base64_encode($imageData);
+                        $designs[] = [
+                            'id' => count($designs) + 1,
+                            'image' => 'data:image/png;base64,' . base64_encode($imageData),
+                            'imagePath' => '/uploads/' . $fileName
+                        ];
                     }
                 }
             }
-            
-            // Only add design if it has a valid image
-            if (isset($designData['image']) && !empty($designData['image']) && strlen($designData['image']) > 100) {
-                $designs[] = $designData;
+        }
+        
+        // Get payment
+        $paymentStmt = $db->prepare("SELECT payment_data FROM payments WHERE order_id = ? LIMIT 1");
+        $paymentStmt->execute([$orderId]);
+        $paymentRow = $paymentStmt->fetch();
+        $paymentDetails = $paymentRow ? json_decode($paymentRow['payment_data'], true) : null;
+        
+        return [
+            'id' => $order['id'],
+            'category' => $order['category'],
+            'quantity' => (int)$order['quantity'],
+            'designs' => $designs,
+            'pricing' => json_decode($order['pricing'], true),
+            'shipping' => json_decode($order['shipping'], true),
+            'status' => $order['status'],
+            'buyerInfo' => json_decode($order['buyer_info'], true),
+            'paymentDetails' => $paymentDetails,
+            'payment' => $paymentDetails, // Also include as 'payment' for frontend compatibility
+            'timestamp' => $order['timestamp']
+        ];
+    }
+    
+    // Get ALL matching orders (sorted by most recent first)
+    $allOrders = [];
+    if (count($matchingOrderIds) > 0) {
+        $placeholders = str_repeat('?,', count($matchingOrderIds) - 1) . '?';
+        $ordersStmt = $db->prepare("SELECT id FROM orders WHERE id IN ($placeholders) ORDER BY timestamp DESC");
+        $ordersStmt->execute($matchingOrderIds);
+        $orderIds = $ordersStmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        foreach ($orderIds as $orderId) {
+            $formattedOrder = formatOrder($orderId, $db);
+            if ($formattedOrder) {
+                $allOrders[] = $formattedOrder;
             }
         }
     }
     
-    // If no designs found, try to find image files
-    if (empty($designs)) {
-        $orderIdParts = explode('-', $orderId);
-        $hash = $orderIdParts[1] ?? '';
-        $pattern = UPLOAD_DIR . '*' . $hash . '*design*.png';
-        $imageFiles = glob($pattern);
-        foreach ($imageFiles as $imageFile) {
-            if (file_exists($imageFile)) {
-                $fileName = basename($imageFile);
-                $imageData = file_get_contents($imageFile);
-                if ($imageData !== false) {
-                    $designs[] = [
-                        'id' => count($designs) + 1,
-                        'image' => 'data:image/png;base64,' . base64_encode($imageData),
-                        'imagePath' => '/uploads/' . $fileName
-                    ];
-                }
-            }
-        }
+    if (empty($allOrders)) {
+        sendJSON(['error' => 'Order not found'], 404);
     }
     
-    // Get payment
-    $paymentStmt = $db->prepare("SELECT payment_data FROM payments WHERE order_id = ? LIMIT 1");
-    $paymentStmt->execute([$orderId]);
-    $paymentRow = $paymentStmt->fetch();
-    $paymentDetails = $paymentRow ? json_decode($paymentRow['payment_data'], true) : null;
-    
-    sendJSON([
-        'id' => $order['id'],
-        'category' => $order['category'],
-        'quantity' => (int)$order['quantity'],
-        'designs' => $designs,
-        'pricing' => json_decode($order['pricing'], true),
-        'shipping' => json_decode($order['shipping'], true),
-        'status' => $order['status'],
-        'buyerInfo' => json_decode($order['buyer_info'], true),
-        'paymentDetails' => $paymentDetails,
-        'payment' => $paymentDetails, // Also include as 'payment' for frontend compatibility
-        'timestamp' => $order['timestamp']
-    ]);
+    // If only one order, return it directly (for backward compatibility)
+    // If multiple orders, return as array
+    if (count($allOrders) === 1) {
+        sendJSON($allOrders[0]);
+    } else {
+        sendJSON([
+            'orders' => $allOrders,
+            'count' => count($allOrders)
+        ]);
+    }
     
 } catch (Exception $e) {
     error_log("Error tracking order by email: " . $e->getMessage());

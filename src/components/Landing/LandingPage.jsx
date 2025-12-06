@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
  * 
  * Professional landing page for the Photo Badge Designer
  */
-function LandingPage({ onGetStarted, onTrackOrder, onTerms, onPrivacy, onFAQ, onReferrer }) {
+function LandingPage({ onGetStarted, onTrackOrder, onTerms, onPrivacy, onFAQ, onReferrer, onReferralInfo }) {
   const [hoveredFeature, setHoveredFeature] = useState(null)
   const [referrerName, setReferrerName] = useState(null)
 
@@ -81,16 +81,6 @@ function LandingPage({ onGetStarted, onTrackOrder, onTerms, onPrivacy, onFAQ, on
               </h1>
             </div>
             <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
-              <button 
-                onClick={onTrackOrder}
-                className="text-sm text-badge-primary/70 hover:text-badge-primary transition-colors flex items-center gap-1 px-2 sm:px-0"
-                title="Track Order"
-              >
-                <svg className="w-4 h-4 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
-                <span className="hidden sm:inline">Track Order</span>
-              </button>
               {referrerName && (
                 <button 
                   onClick={onReferrer}
@@ -103,6 +93,28 @@ function LandingPage({ onGetStarted, onTrackOrder, onTerms, onPrivacy, onFAQ, on
                   <span className="hidden sm:inline">Hi, {referrerName}</span>
                 </button>
               )}
+              {!referrerName && (
+                <button 
+                  onClick={onReferrer}
+                  className="text-sm text-badge-primary/70 hover:text-badge-primary transition-colors flex items-center gap-1 px-2 sm:px-0"
+                  title="Partner Portal"
+                >
+                  <svg className="w-4 h-4 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span className="hidden sm:inline">Partner Portal</span>
+                </button>
+              )}
+              <button 
+                onClick={onTrackOrder}
+                className="text-sm text-badge-primary/70 hover:text-badge-primary transition-colors flex items-center gap-1 px-2 sm:px-0"
+                title="Track Order"
+              >
+                <svg className="w-4 h-4 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+                </svg>
+                <span className="hidden sm:inline">Track Order</span>
+              </button>
               <button 
                 onClick={onGetStarted}
                 className="btn-primary text-xs sm:text-sm py-2 px-2 sm:px-4 whitespace-nowrap"
@@ -369,6 +381,153 @@ function LandingPage({ onGetStarted, onTrackOrder, onTerms, onPrivacy, onFAQ, on
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Partner Program Section - SEO Optimized */}
+      <section className="py-20 px-4 bg-gradient-to-b from-badge-cream to-white" id="partner-program">
+        <div className="max-w-7xl mx-auto">
+          <article className="text-center mb-16">
+            <h2 className="font-display text-3xl sm:text-4xl font-bold text-badge-primary mb-4">
+              Join Our Partner Program
+            </h2>
+            <p className="text-lg text-badge-primary/70 max-w-3xl mx-auto mb-2">
+              Earn 10% commission on every order when you refer customers to Daisy & Son Co. 
+              Perfect for influencers, event planners, businesses, and anyone with a network.
+            </p>
+            <p className="text-sm text-badge-primary/60 max-w-2xl mx-auto">
+              Free to join • No minimum requirements • Real-time tracking • Fast payouts
+            </p>
+          </article>
+
+          <div className="grid md:grid-cols-3 gap-6 mb-12">
+            {/* Benefit 1 */}
+            <div className="bg-white rounded-2xl border border-badge-primary/10 p-6 hover:shadow-lg transition-all">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-badge-secondary/20 to-badge-primary/20 flex items-center justify-center mb-4">
+                <span className="text-2xl">💰</span>
+              </div>
+              <h3 className="font-display text-xl font-semibold text-badge-primary mb-2">
+                Earn 10% Commission
+              </h3>
+              <p className="text-sm text-badge-primary/70 mb-4">
+                Get paid 10% on every successful order placed through your unique referral link. 
+                No limits on how much you can earn.
+              </p>
+              <div className="text-badge-secondary font-semibold">
+                Unlimited Earnings
+              </div>
+            </div>
+
+            {/* Benefit 2 */}
+            <div className="bg-white rounded-2xl border border-badge-primary/10 p-6 hover:shadow-lg transition-all">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-badge-secondary/20 to-badge-primary/20 flex items-center justify-center mb-4">
+                <span className="text-2xl">📊</span>
+              </div>
+              <h3 className="font-display text-xl font-semibold text-badge-primary mb-2">
+                Real-Time Dashboard
+              </h3>
+              <p className="text-sm text-badge-primary/70 mb-4">
+                Track clicks, conversions, and earnings in real-time. Monitor your performance 
+                and optimize your referral strategy.
+              </p>
+              <div className="text-badge-secondary font-semibold">
+                Complete Analytics
+              </div>
+            </div>
+
+            {/* Benefit 3 */}
+            <div className="bg-white rounded-2xl border border-badge-primary/10 p-6 hover:shadow-lg transition-all">
+              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-badge-secondary/20 to-badge-primary/20 flex items-center justify-center mb-4">
+                <span className="text-2xl">🚀</span>
+              </div>
+              <h3 className="font-display text-xl font-semibold text-badge-primary mb-2">
+                Easy to Get Started
+              </h3>
+              <p className="text-sm text-badge-primary/70 mb-4">
+                Sign up in under a minute. Get your unique referral link instantly. 
+                Share via social media, email, or any platform you prefer.
+              </p>
+              <div className="text-badge-secondary font-semibold">
+                Instant Setup
+              </div>
+            </div>
+          </div>
+
+          {/* How Partner Program Works */}
+          <div className="bg-white rounded-2xl border border-badge-primary/10 p-8 sm:p-12 mb-8">
+            <h3 className="font-display text-2xl font-bold text-badge-primary mb-6 text-center">
+              How the Partner Program Works
+            </h3>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-badge-primary text-white flex items-center justify-center font-bold text-xl">
+                  1
+                </div>
+                <h4 className="font-semibold text-badge-primary mb-2">Sign Up Free</h4>
+                <p className="text-sm text-badge-primary/70">
+                  Register as a partner with your name and contact information. 
+                  No fees, no commitments.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-badge-primary text-white flex items-center justify-center font-bold text-xl">
+                  2
+                </div>
+                <h4 className="font-semibold text-badge-primary mb-2">Get Your Link</h4>
+                <p className="text-sm text-badge-primary/70">
+                  Receive your unique referral link and code. Share it with your 
+                  network, clients, or audience.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-badge-primary text-white flex items-center justify-center font-bold text-xl">
+                  3
+                </div>
+                <h4 className="font-semibold text-badge-primary mb-2">Share & Track</h4>
+                <p className="text-sm text-badge-primary/70">
+                  When someone clicks your link and places an order, you automatically 
+                  earn commission. Track everything in real-time.
+                </p>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-badge-primary text-white flex items-center justify-center font-bold text-xl">
+                  4
+                </div>
+                <h4 className="font-semibold text-badge-primary mb-2">Get Paid</h4>
+                <p className="text-sm text-badge-primary/70">
+                  Request payouts anytime from your dashboard. Fast and secure 
+                  payment processing within 3-5 business days.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA */}
+          <div className="text-center">
+            <div className="inline-flex flex-col sm:flex-row gap-4 items-center">
+              <button
+                onClick={onReferralInfo || onReferrer}
+                className="btn-primary text-lg px-8 py-4 inline-flex items-center gap-2"
+              >
+                Learn More About Partner Program
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </button>
+              <button
+                onClick={onReferrer}
+                className="btn-secondary text-lg px-8 py-4 inline-flex items-center gap-2"
+              >
+                Become a Partner
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </button>
+            </div>
+            <p className="text-sm text-badge-primary/50 mt-4">
+              Perfect for influencers, event planners, businesses, marketers, and anyone with a network
+            </p>
           </div>
         </div>
       </section>

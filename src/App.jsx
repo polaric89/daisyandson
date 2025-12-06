@@ -6,7 +6,7 @@ import CategoryModal from './components/CategoryModal/CategoryModal'
 import OrderTracking from './components/OrderTracking/OrderTracking'
 import { TermsOfService, PrivacyPolicy, FAQ } from './components/Legal'
 import { DesignerPage } from './components/Designer'
-import { ReferrerAuth, ReferrerDashboard } from './components/Referrals'
+import { ReferrerAuth, ReferrerDashboard, ReferralInfo } from './components/Referrals'
 import { useReferral } from './components/Referrals/useReferral'
 import { usePageNavigation, useBuyerInfo, useShipping, useOrder } from './hooks'
 
@@ -145,6 +145,16 @@ function App() {
     return <FAQ onBack={() => navigateTo('landing')} />
   }
 
+  // Referral Info page
+  if (currentPage === 'referral-info') {
+    return (
+      <ReferralInfo 
+        onBack={() => navigateTo('landing')}
+        onBecomeReferrer={() => navigateTo(referrerData ? 'referrer-dashboard' : 'referrer-auth')}
+      />
+    )
+  }
+
   // Referrer Auth page
   if (currentPage === 'referrer-auth') {
     return (
@@ -182,6 +192,7 @@ function App() {
           onPrivacy={() => navigateTo('privacy')}
           onFAQ={() => navigateTo('faq')}
           onReferrer={() => navigateTo(referrerData ? 'referrer-dashboard' : 'referrer-auth')}
+          onReferralInfo={() => navigateTo('referral-info')}
         />
         <CategoryModal 
           isOpen={showCategoryModal}
@@ -201,6 +212,7 @@ function App() {
       onBackToHome={handleBackToHomeExtended}
       onTrackOrder={() => navigateTo('tracking')}
       onReferrer={() => navigateTo(referrerData ? 'referrer-dashboard' : 'referrer-auth')}
+      onReferralInfo={() => navigateTo('referral-info')}
       // Order state
       orderData={orderData}
       orderComplete={orderComplete}

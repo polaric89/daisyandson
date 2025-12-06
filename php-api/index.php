@@ -45,6 +45,8 @@ $routes = [
     'POST:/api/track-referral' => 'track-referral.php',
     'POST:/api/record-conversion' => 'record-conversion.php',
     'GET:/api/referral-stats/{id}' => 'referral-stats.php',
+    'GET:/api/referral/{code}' => 'referral-redirect.php',
+    'GET:/api/r/{code}' => 'referral-redirect.php',
     
     // Referrer system
     'POST:/api/referrer/register' => 'referrer-register.php',
@@ -57,6 +59,7 @@ $routes = [
     'GET:/api/admin/referrers' => 'admin-referrers.php',
     'GET:/api/admin/payouts' => 'admin-payouts.php',
     'PUT:/api/admin/payouts/{id}' => 'admin-process-payout.php',
+    'POST:/api/admin/payouts/{id}' => 'admin-process-payout.php', // Also accept POST for FormData
     
     // Shipping
     'GET:/api/shipping/rates' => 'shipping-rates.php',

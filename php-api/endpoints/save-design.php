@@ -175,21 +175,46 @@ try {
             $amount = floatval($input['pricing']['total'] ?? $input['payment']['amount'] ?? 29);
             $commission = $amount * COMMISSION_RATE;
             
-            // Get referrer by referral code
-            $referrerStmt = $db->prepare("SELECT id FROM referrers WHERE referral_code = ?");
-            $referrerStmt->execute([$referralId]);
+            error_log("Recording referral conversion - referralId: $referralId, orderId: $orderId, amount: $amount");
+            
+            // Get referrer by referral code (referralId should be the referral_code)
+            $referrerStmt = $db->prepare("SELECT referral_code FROM referrers WHERE referral_code = ? OR id = ?");
+            $referrerStmt->execute([$referralId, $referralId]);
             $referrer = $referrerStmt->fetch();
             
             if ($referrer) {
-                $convStmt = $db->prepare("
-                    INSERT INTO referral_conversions (referral_id, order_id, amount, commission, status, timestamp)
-                    VALUES (?, ?, ?, ?, 'pending', NOW())
-                ");
-                $convStmt->execute([$referralId, $orderId, $amount, $commission]);
+                $referralCode = $referrer['referral_code'];
+                error_log("Found referrer with code: $referralCode, recording conversion");
+                
+                // Check if conversion already exists (avoid duplicates)
+                $checkStmt = $db->prepare("SELECT id FROM referral_conversions WHERE order_id = ? AND referral_id = ?");
+                $checkStmt->execute([$orderId, $referralCode]);
+                $existing = $checkStmt->fetch();
+                
+                if (!$existing) {
+                    $convStmt = $db->prepare("
+                        INSERT INTO referral_conversions (referral_id, order_id, amount, commission, status, timestamp)
+                        VALUES (?, ?, ?, ?, 'pending', NOW())
+                    ");
+                    $convStmt->execute([$referralCode, $orderId, $amount, $commission]);
+                    error_log("Conversion recorded successfully - referral_id: $referralCode, order_id: $orderId");
+                } else {
+                    error_log("Conversion already exists for order $orderId and referral $referralCode");
+                }
+            } else {
+                error_log("Referrer not found for referralId: $referralId - conversion not recorded");
             }
         } catch (Exception $e) {
             error_log("Error recording referral conversion: " . $e->getMessage());
+            error_log("Stack trace: " . $e->getTraceAsString());
             // Don't fail the order if referral conversion fails
+        }
+    } else {
+        if (!$referralId) {
+            error_log("No referralId provided - skipping conversion recording");
+        }
+        if (!isset($input['payment'])) {
+            error_log("No payment data provided - skipping conversion recording");
         }
     }
     

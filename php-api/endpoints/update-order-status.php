@@ -23,17 +23,44 @@ try {
     }
     
     // Valid statuses
-    $validStatuses = ['pending', 'processing', 'completed', 'shipped', 'cancelled'];
+    $validStatuses = ['pending', 'printing', 'processing', 'shipped', 'completed', 'cancelled'];
     if (!in_array($newStatus, $validStatuses)) {
-        sendJSON(['error' => 'Invalid status'], 400);
+        sendJSON([
+            'error' => 'Invalid status',
+            'validStatuses' => $validStatuses,
+            'receivedStatus' => $newStatus
+        ], 400);
     }
+    
+    // Log the update attempt
+    error_log("Updating order $orderId status to: $newStatus");
     
     // Update order status
     $stmt = $db->prepare("UPDATE orders SET status = ? WHERE id = ?");
     $stmt->execute([$newStatus, $orderId]);
     
-    if ($stmt->rowCount() === 0) {
-        sendJSON(['error' => 'Order not found'], 404);
+    $rowsAffected = $stmt->rowCount();
+    error_log("Update query executed. Rows affected: $rowsAffected");
+    
+    if ($rowsAffected === 0) {
+        // Check if order exists
+        $checkStmt = $db->prepare("SELECT id, status FROM orders WHERE id = ?");
+        $checkStmt->execute([$orderId]);
+        $existingOrder = $checkStmt->fetch();
+        
+        if (!$existingOrder) {
+            error_log("Order not found: $orderId");
+            sendJSON(['error' => 'Order not found'], 404);
+        } else {
+            error_log("Order exists but status unchanged. Current status: " . $existingOrder['status']);
+            // Status might be the same, but still return success
+            sendJSON([
+                'success' => true,
+                'message' => 'Order status unchanged (already set to this status)',
+                'orderId' => $orderId,
+                'status' => $existingOrder['status']
+            ]);
+        }
     }
     
     // If status changed to completed, update conversion status
