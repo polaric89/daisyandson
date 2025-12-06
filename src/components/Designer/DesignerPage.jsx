@@ -16,6 +16,7 @@ function DesignerPage({
   onBackToHome,
   onTrackOrder,
   onReferrer,
+  onReferralInfo,
   // Order state
   orderData,
   orderComplete,
@@ -43,7 +44,10 @@ function DesignerPage({
       />
 
       {/* Referral Banner */}
-      <ReferralBanner onBecomeReferrer={onReferrer} />
+      <ReferralBanner 
+        onBecomeReferrer={onReferrer} 
+        onLearnMore={onReferralInfo}
+      />
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto">

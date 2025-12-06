@@ -90,6 +90,8 @@ CREATE TABLE IF NOT EXISTS payouts (
     payment_details JSON NOT NULL,
     status VARCHAR(50) DEFAULT 'pending',
     transaction_id VARCHAR(255) NULL,
+    transaction_number VARCHAR(255) NULL,
+    proof_of_payment JSON NULL,
     requested_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     processed_at DATETIME NULL,
     FOREIGN KEY (referrer_id) REFERENCES referrers(id) ON DELETE CASCADE,

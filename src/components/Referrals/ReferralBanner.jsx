@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react'
+import { getShortenedReferralLink } from '../../utils/tinyurl'
 
 /**
  * ReferralBanner Component
@@ -6,11 +7,13 @@ import { useState, useCallback, useEffect } from 'react'
  * Displays a banner for registered referrers to share their link,
  * or a CTA to become a referrer.
  */
-function ReferralBanner({ onBecomeReferrer }) {
+function ReferralBanner({ onBecomeReferrer, onLearnMore }) {
   const [referrer, setReferrer] = useState(null)
   const [copied, setCopied] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [stats, setStats] = useState({ clicks: 0, conversions: 0, earnings: 0 })
+  const [referralLink, setReferralLink] = useState(null)
+  const [loadingLink, setLoadingLink] = useState(false)
 
   // Check if user is a registered referrer
   useEffect(() => {
@@ -21,6 +24,21 @@ function ReferralBanner({ onBecomeReferrer }) {
         setReferrer(data)
         // Fetch stats
         fetchStats(data.id)
+        // Get shortened referral link
+        if (data.referralCode) {
+          setLoadingLink(true)
+          getShortenedReferralLink(data.referralCode)
+            .then(shortLink => {
+              setReferralLink(shortLink)
+              setLoadingLink(false)
+            })
+            .catch(err => {
+              console.error('Failed to shorten link:', err)
+              // Fallback to long link
+              setReferralLink(`${window.location.origin}?ref=${data.referralCode}`)
+              setLoadingLink(false)
+            })
+        }
       } catch (e) {
         console.error('Invalid referrer data:', e)
       }
@@ -43,10 +61,6 @@ function ReferralBanner({ onBecomeReferrer }) {
     }
   }
 
-  const referralLink = referrer 
-    ? `${window.location.origin}?ref=${referrer.referralCode}`
-    : null
-
   const handleCopy = useCallback(async () => {
     if (!referralLink) return
     try {
@@ -62,11 +76,8 @@ function ReferralBanner({ onBecomeReferrer }) {
   if (!referrer) {
     return (
       <div className="max-w-7xl mx-auto mb-6">
-        <button
-          onClick={onBecomeReferrer}
-          className="w-full glass-card px-4 py-3 flex items-center justify-between hover:bg-white/90 transition-colors group"
-        >
-          <div className="flex items-center gap-3">
+        <div className="w-full glass-card px-4 py-3 flex items-center justify-between hover:bg-white/90 transition-colors group">
+          <div className="flex items-center gap-3 flex-1">
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-badge-secondary/20 to-badge-primary/20 flex items-center justify-center">
               <span className="text-xl">🤝</span>
             </div>
@@ -77,11 +88,23 @@ function ReferralBanner({ onBecomeReferrer }) {
           </div>
           
           <div className="flex items-center gap-2">
-            <span className="text-badge-secondary font-medium text-sm group-hover:underline">
-              Learn More →
-            </span>
+            {onLearnMore ? (
+              <button
+                onClick={onLearnMore}
+                className="text-badge-secondary font-medium text-sm hover:underline"
+              >
+                Learn More →
+              </button>
+            ) : (
+              <button
+                onClick={onBecomeReferrer}
+                className="text-badge-secondary font-medium text-sm hover:underline"
+              >
+                Learn More →
+              </button>
+            )}
           </div>
-        </button>
+        </div>
       </div>
     )
   }
@@ -139,7 +162,7 @@ function ReferralBanner({ onBecomeReferrer }) {
               <div className="flex gap-2">
                 <input
                   type="text"
-                  value={referralLink || 'Loading...'}
+                  value={loadingLink ? 'Shortening link...' : (referralLink || 'Loading...')}
                   readOnly
                   className="input-field flex-1 text-sm font-mono"
                 />

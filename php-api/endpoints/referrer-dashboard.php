@@ -116,6 +116,7 @@ try {
     $availableForPayout = max(0, $confirmedEarnings - $paidAmount - $pendingPayoutAmount);
     
     // Get recent conversions (last 20)
+    // First try to get from referral_conversions table
     $conversionsStmt = $db->prepare("
         SELECT rc.*, o.status as order_status, o.pricing
         FROM referral_conversions rc
@@ -128,25 +129,65 @@ try {
     $conversions = [];
     while ($conv = $conversionsStmt->fetch()) {
         $orderPricing = json_decode($conv['pricing'], true);
+        // Use the actual order status instead of just checking for 'completed'
+        $orderStatus = $conv['order_status'] ?? 'pending';
         $conversions[] = [
             'orderId' => $conv['order_id'],
             'amount' => (float)$conv['amount'],
             'commission' => (float)$conv['commission'],
-            'status' => $conv['order_status'] === 'completed' ? 'completed' : 'pending',
+            'status' => $orderStatus, // Show actual order status (pending, printing, shipped, completed, etc.)
             'timestamp' => $conv['timestamp']
         ];
     }
     
+    // If no conversions found in referral_conversions table, check orders table directly
+    // This handles cases where conversion wasn't recorded but order has referral_id
+    if (empty($conversions)) {
+        error_log("No conversions found in referral_conversions table, checking orders table directly");
+        $ordersStmt = $db->prepare("
+            SELECT id, pricing, status, timestamp
+            FROM orders
+            WHERE referral_id = ?
+            ORDER BY timestamp DESC
+            LIMIT 20
+        ");
+        $ordersStmt->execute([$referrer['referral_code']]);
+        while ($order = $ordersStmt->fetch()) {
+            $orderPricing = json_decode($order['pricing'], true);
+            $amount = (float)($orderPricing['total'] ?? 0);
+            $commission = $amount * COMMISSION_RATE;
+            
+            // Use the actual order status
+            $orderStatus = $order['status'] ?? 'pending';
+            $conversions[] = [
+                'orderId' => $order['id'],
+                'amount' => $amount,
+                'commission' => round($commission, 2),
+                'status' => $orderStatus, // Show actual order status
+                'timestamp' => $order['timestamp']
+            ];
+        }
+    }
+    
+    error_log("Found " . count($conversions) . " conversions for referrer code: " . $referrer['referral_code']);
+    
     // Format payouts for frontend
     $formattedPayouts = [];
     foreach ($payouts as $payout) {
+        $proofOfPayment = null;
+        if ($payout['proof_of_payment']) {
+            $proofOfPayment = json_decode($payout['proof_of_payment'], true);
+        }
+        
         $formattedPayouts[] = [
             'id' => $payout['id'],
             'amount' => (float)$payout['amount'],
             'status' => $payout['status'],
             'paymentMethod' => json_decode($payout['payment_details'], true)['paymentMethod'] ?? 'unknown',
             'requestedAt' => $payout['requested_at'],
-            'processedAt' => $payout['processed_at']
+            'processedAt' => $payout['processed_at'],
+            'transactionNumber' => $payout['transaction_number'],
+            'proofOfPayment' => $proofOfPayment
         ];
     }
     

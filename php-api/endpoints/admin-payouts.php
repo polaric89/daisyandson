@@ -31,6 +31,11 @@ try {
     
     $payouts = [];
     while ($row = $stmt->fetch()) {
+        $proofOfPayment = null;
+        if ($row['proof_of_payment']) {
+            $proofOfPayment = json_decode($row['proof_of_payment'], true);
+        }
+        
         $payouts[] = [
             'id' => $row['id'],
             'referrerId' => $row['referrer_id'],
@@ -42,12 +47,22 @@ try {
             'paymentDetails' => json_decode($row['payment_details'], true),
             'status' => $row['status'],
             'transactionId' => $row['transaction_id'],
+            'transactionNumber' => $row['transaction_number'],
+            'proofOfPayment' => $proofOfPayment,
             'requestedAt' => $row['requested_at'],
             'processedAt' => $row['processed_at']
         ];
     }
     
-    sendJSON($payouts);
+    error_log("Admin payouts request - Found " . count($payouts) . " payouts");
+    if (count($payouts) > 0) {
+        error_log("Sample payout: " . json_encode($payouts[0]));
+    }
+    
+    sendJSON([
+        'payouts' => $payouts,
+        'count' => count($payouts)
+    ]);
     
 } catch (Exception $e) {
     error_log("Error getting payouts: " . $e->getMessage());

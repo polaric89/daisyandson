@@ -7,7 +7,9 @@ import { useState } from 'react'
 function OrderTracking({ onBack }) {
   const [searchType, setSearchType] = useState('orderId') // orderId or email
   const [searchValue, setSearchValue] = useState('')
-  const [order, setOrder] = useState(null)
+  const [order, setOrder] = useState(null) // Single order (for Order ID search)
+  const [orders, setOrders] = useState(null) // Multiple orders (for email search)
+  const [expandedOrderId, setExpandedOrderId] = useState(null) // For accordion
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
   const [searched, setSearched] = useState(false)
@@ -29,9 +31,24 @@ function OrderTracking({ onBack }) {
       
       if (response.ok) {
         const data = await response.json()
-        setOrder(data)
+        // Check if response has 'orders' array (multiple orders) or single order
+        if (data.orders && Array.isArray(data.orders)) {
+          // Multiple orders from email search
+          setOrders(data.orders)
+          setOrder(null)
+          // Expand the first order by default
+          if (data.orders.length > 0) {
+            setExpandedOrderId(data.orders[0].id)
+          }
+        } else {
+          // Single order (from Order ID search or single match)
+          setOrder(data)
+          setOrders(null)
+          setExpandedOrderId(null)
+        }
       } else if (response.status === 404) {
         setOrder(null)
+        setOrders(null)
         setError('Order not found. Please check your Order ID or email.')
       } else {
         throw new Error('Failed to fetch order')
@@ -76,6 +93,173 @@ function OrderTracking({ onBack }) {
   const statusSteps = ['pending', 'printing', 'shipped', 'completed']
   const currentStepIndex = order ? statusSteps.indexOf(order.status || 'pending') : -1
 
+  // Helper function to render order details (used for both single and multiple orders)
+  const renderOrderDetails = (orderItem) => {
+    const stepIndex = statusSteps.indexOf(orderItem.status || 'pending')
+    
+    return (
+      <>
+        {/* Progress Steps */}
+        <div className="p-6 bg-badge-beige/50">
+          <div className="flex items-center justify-between mb-2">
+            {statusSteps.map((step, idx) => (
+              <div key={step} className="flex flex-col items-center flex-1">
+                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
+                  idx <= stepIndex 
+                    ? 'bg-badge-primary text-white' 
+                    : 'bg-badge-primary/20 text-badge-primary/40'
+                }`}>
+                  {getStatusInfo(step).icon}
+                </div>
+                <span className={`text-xs mt-2 text-center ${
+                  idx <= stepIndex ? 'text-badge-primary font-medium' : 'text-badge-primary/40'
+                }`}>
+                  {getStatusInfo(step).label}
+                </span>
+              </div>
+            ))}
+          </div>
+          {/* Progress Bar */}
+          <div className="relative h-1 bg-badge-primary/20 rounded-full mt-4">
+            <div 
+              className="absolute left-0 top-0 h-full bg-badge-primary rounded-full transition-all duration-500"
+              style={{ width: `${(stepIndex / (statusSteps.length - 1)) * 100}%` }}
+            />
+          </div>
+          <p className="text-center text-sm text-badge-primary/70 mt-4">
+            {getStatusInfo(orderItem.status).description}
+          </p>
+        </div>
+
+        {/* Order Details */}
+        <div className="p-6">
+          <h3 className="font-semibold text-badge-primary mb-4">Order Details</h3>
+          
+          <div className="space-y-3">
+            {/* Category */}
+            <div className="flex justify-between text-sm">
+              <span className="text-badge-primary/60">Type</span>
+              <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                orderItem.category === 'personal' 
+                  ? 'bg-badge-leaf/10 text-badge-leaf' 
+                  : 'bg-badge-secondary/10 text-badge-secondary'
+              }`}>
+                {orderItem.category === 'personal' ? '👤 Personal' : '🎉 Event'}
+              </span>
+            </div>
+
+            {/* Quantity */}
+            <div className="flex justify-between text-sm">
+              <span className="text-badge-primary/60">Quantity</span>
+              <span className="font-medium text-badge-primary">{orderItem.quantity} badge{orderItem.quantity > 1 ? 's' : ''}</span>
+            </div>
+
+            {/* Price */}
+            {orderItem.pricing && (
+              <div className="flex justify-between text-sm">
+                <span className="text-badge-primary/60">Total Paid</span>
+                <span className="font-semibold text-badge-secondary">{orderItem.pricing.total} AED</span>
+              </div>
+            )}
+
+            {/* Customer */}
+            {orderItem.payment?.payerName && (
+              <div className="flex justify-between text-sm">
+                <span className="text-badge-primary/60">Customer</span>
+                <span className="text-badge-primary">{orderItem.payment.payerName}</span>
+              </div>
+            )}
+
+            {/* Shipping Info */}
+            {orderItem.shipping?.cost && (
+              <div className="flex justify-between text-sm">
+                <span className="text-badge-primary/60">Shipping</span>
+                <span className="text-badge-primary">{orderItem.shipping.cost} AED</span>
+              </div>
+            )}
+          </div>
+
+          {/* Aramex Shipping Info */}
+          {orderItem.shipping && (orderItem.shipping.carrier === 'Aramex' || orderItem.shipping.trackingNumber) && (
+            <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-lg bg-white shadow flex items-center justify-center">
+                  <span className="text-xl">📦</span>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800">Aramex Shipping</p>
+                  <p className="text-xs text-gray-500">
+                    {orderItem.shipping.estimatedDelivery || orderItem.shipping.deliveryTime || 'Preparing for shipment'}
+                  </p>
+                </div>
+              </div>
+              
+              {orderItem.shipping.trackingNumber && (
+                <>
+                  <div className="bg-white rounded-lg p-3 mb-3">
+                    <p className="text-xs text-gray-500 mb-1">Tracking Number</p>
+                    <p className="font-mono text-sm font-bold text-gray-800 select-all">
+                      {orderItem.shipping.trackingNumber}
+                    </p>
+                  </div>
+
+                  <a
+                    href={`https://www.aramex.com/track/results?ShipmentNumber=${orderItem.shipping.trackingNumber}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium text-sm hover:from-orange-600 hover:to-red-600 transition-all"
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    Track on Aramex
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                </>
+              )}
+              
+              {!orderItem.shipping.trackingNumber && (
+                <div className="bg-white rounded-lg p-3 text-center">
+                  <p className="text-xs text-gray-600">Tracking number will be available once your order ships.</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Shipping Address */}
+          {orderItem.shipping?.address && (
+            <div className="mt-4 pt-4 border-t border-badge-primary/10">
+              <h4 className="text-sm font-medium text-badge-primary/60 mb-2">Delivery Address</h4>
+              <div className="text-sm text-badge-primary">
+                <p className="font-medium">{orderItem.shipping.name}</p>
+                <p>{orderItem.shipping.phone}</p>
+                <p>{orderItem.shipping.address}</p>
+                <p>{orderItem.shipping.city}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Badge Previews */}
+          {orderItem.designs && orderItem.designs.length > 0 && (
+            <div className="mt-6 pt-4 border-t border-badge-primary/10">
+              <h4 className="text-sm font-medium text-badge-primary/60 mb-3">Your Badge{orderItem.designs.length > 1 ? 's' : ''}</h4>
+              <div className="flex flex-wrap gap-3">
+                {orderItem.designs.map((design, idx) => (
+                  <div key={idx} className="w-16 h-16 rounded-full overflow-hidden border-2 border-badge-primary/10 shadow">
+                    <img src={design.image} alt={`Badge ${idx + 1}`} className="w-full h-full object-cover" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-badge-cream">
       {/* Header */}
@@ -113,7 +297,14 @@ function OrderTracking({ onBack }) {
           {/* Search Type Toggle */}
           <div className="flex gap-2 mb-4">
             <button
-              onClick={() => { setSearchType('orderId'); setSearchValue(''); setOrder(null); setSearched(false); }}
+              onClick={() => { 
+                setSearchType('orderId'); 
+                setSearchValue(''); 
+                setOrder(null); 
+                setOrders(null);
+                setExpandedOrderId(null);
+                setSearched(false); 
+              }}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
                 searchType === 'orderId'
                   ? 'bg-badge-primary text-white'
@@ -123,7 +314,14 @@ function OrderTracking({ onBack }) {
               Order ID
             </button>
             <button
-              onClick={() => { setSearchType('email'); setSearchValue(''); setOrder(null); setSearched(false); }}
+              onClick={() => { 
+                setSearchType('email'); 
+                setSearchValue(''); 
+                setOrder(null); 
+                setOrders(null);
+                setExpandedOrderId(null);
+                setSearched(false); 
+              }}
               className={`flex-1 py-2 px-4 rounded-lg text-sm font-medium transition-colors ${
                 searchType === 'email'
                   ? 'bg-badge-primary text-white'
@@ -164,8 +362,8 @@ function OrderTracking({ onBack }) {
           </div>
         )}
 
-        {/* Order Result */}
-        {order && (
+        {/* Single Order Result (Order ID search) */}
+        {order && !orders && (
           <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg border border-badge-primary/10 overflow-hidden">
             {/* Order Header */}
             <div className="p-6 border-b border-badge-primary/10">
@@ -188,169 +386,82 @@ function OrderTracking({ onBack }) {
                 }) : 'Unknown date'}
               </p>
             </div>
+            {renderOrderDetails(order)}
+          </div>
+        )}
 
-            {/* Progress Steps */}
-            <div className="p-6 bg-badge-beige/50">
-              <div className="flex items-center justify-between mb-2">
-                {statusSteps.map((step, idx) => (
-                  <div key={step} className="flex flex-col items-center flex-1">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
-                      idx <= currentStepIndex 
-                        ? 'bg-badge-primary text-white' 
-                        : 'bg-badge-primary/20 text-badge-primary/40'
-                    }`}>
-                      {getStatusInfo(step).icon}
-                    </div>
-                    <span className={`text-xs mt-2 text-center ${
-                      idx <= currentStepIndex ? 'text-badge-primary font-medium' : 'text-badge-primary/40'
-                    }`}>
-                      {getStatusInfo(step).label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              {/* Progress Bar */}
-              <div className="relative h-1 bg-badge-primary/20 rounded-full mt-4">
-                <div 
-                  className="absolute left-0 top-0 h-full bg-badge-primary rounded-full transition-all duration-500"
-                  style={{ width: `${(currentStepIndex / (statusSteps.length - 1)) * 100}%` }}
-                />
-              </div>
-              <p className="text-center text-sm text-badge-primary/70 mt-4">
-                {getStatusInfo(order.status).description}
+        {/* Multiple Orders Result (Email search - Accordion) */}
+        {orders && orders.length > 0 && (
+          <div className="space-y-4">
+            <div className="bg-white/80 backdrop-blur rounded-xl shadow border border-badge-primary/10 p-4 mb-4">
+              <p className="text-sm text-badge-primary/70 text-center">
+                Found <span className="font-semibold text-badge-primary">{orders.length}</span> order{orders.length > 1 ? 's' : ''} for this email
               </p>
             </div>
-
-            {/* Order Details */}
-            <div className="p-6">
-              <h3 className="font-semibold text-badge-primary mb-4">Order Details</h3>
-              
-              <div className="space-y-3">
-                {/* Category */}
-                <div className="flex justify-between text-sm">
-                  <span className="text-badge-primary/60">Type</span>
-                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    order.category === 'personal' 
-                      ? 'bg-badge-leaf/10 text-badge-leaf' 
-                      : 'bg-badge-secondary/10 text-badge-secondary'
-                  }`}>
-                    {order.category === 'personal' ? '👤 Personal' : '🎉 Event'}
-                  </span>
-                </div>
-
-                {/* Quantity */}
-                <div className="flex justify-between text-sm">
-                  <span className="text-badge-primary/60">Quantity</span>
-                  <span className="font-medium text-badge-primary">{order.quantity} badge{order.quantity > 1 ? 's' : ''}</span>
-                </div>
-
-                {/* Price */}
-                {order.pricing && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-badge-primary/60">Total Paid</span>
-                    <span className="font-semibold text-badge-secondary">{order.pricing.total} AED</span>
-                  </div>
-                )}
-
-                {/* Customer */}
-                {order.payment?.payerName && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-badge-primary/60">Customer</span>
-                    <span className="text-badge-primary">{order.payment.payerName}</span>
-                  </div>
-                )}
-
-                {/* Shipping Info */}
-                {order.shipping?.cost && (
-                  <div className="flex justify-between text-sm">
-                    <span className="text-badge-primary/60">Shipping</span>
-                    <span className="text-badge-primary">{order.shipping.cost} AED</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Aramex Shipping Info */}
-              {order.shipping && (order.shipping.carrier === 'Aramex' || order.shipping.trackingNumber) && (
-                <div className="mt-4 p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200">
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-white shadow flex items-center justify-center">
-                      <span className="text-xl">📦</span>
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800">Aramex Shipping</p>
-                      <p className="text-xs text-gray-500">
-                        {order.shipping.estimatedDelivery || order.shipping.deliveryTime || 'Preparing for shipment'}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {order.shipping.trackingNumber && (
-                    <>
-                      <div className="bg-white rounded-lg p-3 mb-3">
-                        <p className="text-xs text-gray-500 mb-1">Tracking Number</p>
-                        <p className="font-mono text-sm font-bold text-gray-800 select-all">
-                          {order.shipping.trackingNumber}
+            
+            {orders.map((orderItem) => {
+              const isExpanded = expandedOrderId === orderItem.id
+              return (
+                <div 
+                  key={orderItem.id} 
+                  className="bg-white/80 backdrop-blur rounded-2xl shadow-lg border border-badge-primary/10 overflow-hidden transition-all"
+                >
+                  {/* Accordion Header */}
+                  <button
+                    onClick={() => setExpandedOrderId(isExpanded ? null : orderItem.id)}
+                    className="w-full p-6 border-b border-badge-primary/10 hover:bg-badge-beige/30 transition-colors text-left"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <p className="text-sm text-badge-primary/60">Order ID</p>
+                          <p className="font-mono font-semibold text-badge-primary">{orderItem.id}</p>
+                        </div>
+                        <p className="text-sm text-badge-primary/60">
+                          Ordered on {orderItem.timestamp ? new Date(orderItem.timestamp).toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          }) : 'Unknown date'}
                         </p>
+                        {orderItem.pricing && (
+                          <p className="text-sm font-medium text-badge-secondary mt-1">
+                            {orderItem.pricing.total} AED
+                          </p>
+                        )}
                       </div>
+                      <div className="flex items-center gap-3">
+                        <span className={`px-4 py-1.5 rounded-full text-sm font-medium border ${getStatusInfo(orderItem.status).color}`}>
+                          {getStatusInfo(orderItem.status).icon} {getStatusInfo(orderItem.status).label}
+                        </span>
+                        <svg 
+                          className={`w-5 h-5 text-badge-primary/60 transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+                          fill="none" 
+                          viewBox="0 0 24 24" 
+                          stroke="currentColor"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+                  </button>
 
-                      <a
-                        href={`https://www.aramex.com/track/results?ShipmentNumber=${order.shipping.trackingNumber}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-lg font-medium text-sm hover:from-orange-600 hover:to-red-600 transition-all"
-                      >
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        Track on Aramex
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                        </svg>
-                      </a>
-                    </>
-                  )}
-                  
-                  {!order.shipping.trackingNumber && (
-                    <div className="bg-white rounded-lg p-3 text-center">
-                      <p className="text-xs text-gray-600">Tracking number will be available once your order ships.</p>
+                  {/* Accordion Content */}
+                  {isExpanded && (
+                    <div className="animate-in slide-in-from-top-2 duration-200">
+                      {renderOrderDetails(orderItem)}
                     </div>
                   )}
                 </div>
-              )}
-
-              {/* Shipping Address */}
-              {order.shipping?.address && (
-                <div className="mt-4 pt-4 border-t border-badge-primary/10">
-                  <h4 className="text-sm font-medium text-badge-primary/60 mb-2">Delivery Address</h4>
-                  <div className="text-sm text-badge-primary">
-                    <p className="font-medium">{order.shipping.name}</p>
-                    <p>{order.shipping.phone}</p>
-                    <p>{order.shipping.address}</p>
-                    <p>{order.shipping.city}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Badge Previews */}
-              {order.designs && order.designs.length > 0 && (
-                <div className="mt-6 pt-4 border-t border-badge-primary/10">
-                  <h4 className="text-sm font-medium text-badge-primary/60 mb-3">Your Badge{order.designs.length > 1 ? 's' : ''}</h4>
-                  <div className="flex flex-wrap gap-3">
-                    {order.designs.map((design, idx) => (
-                      <div key={idx} className="w-16 h-16 rounded-full overflow-hidden border-2 border-badge-primary/10 shadow">
-                        <img src={design.image} alt={`Badge ${idx + 1}`} className="w-full h-full object-cover" />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+              )
+            })}
           </div>
         )}
 
         {/* No Results */}
-        {searched && !order && !error && !loading && (
+        {searched && !order && !orders && !error && !loading && (
           <div className="bg-white/80 backdrop-blur rounded-2xl shadow-lg border border-badge-primary/10 p-8 text-center">
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-badge-primary/10 flex items-center justify-center">
               <svg className="w-8 h-8 text-badge-primary/40" fill="none" viewBox="0 0 24 24" stroke="currentColor">

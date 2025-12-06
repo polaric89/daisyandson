@@ -82,4 +82,41 @@ function getRouteParam($name) {
     return $_GET[$name] ?? null;
 }
 
+/**
+ * Save uploaded file
+ */
+function saveUploadedFile($file, $prefix = 'file') {
+    try {
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            error_log("File upload error: " . $file['error']);
+            return false;
+        }
+        
+        $uploadDir = UPLOAD_DIR;
+        
+        // Create upload directory if it doesn't exist
+        if (!file_exists($uploadDir)) {
+            if (!mkdir($uploadDir, 0755, true)) {
+                error_log("Failed to create upload directory: $uploadDir");
+                return false;
+            }
+        }
+        
+        // Generate unique filename
+        $fileExt = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $fileName = $prefix . '-' . time() . '-' . substr(md5(uniqid()), 0, 8) . '.' . $fileExt;
+        $filePath = $uploadDir . $fileName;
+        
+        if (move_uploaded_file($file['tmp_name'], $filePath)) {
+            return $fileName;
+        } else {
+            error_log("Failed to move uploaded file");
+            return false;
+        }
+    } catch (Exception $e) {
+        error_log("Error saving uploaded file: " . $e->getMessage());
+        return false;
+    }
+}
+
 ?>

@@ -18,6 +18,13 @@ function AdminDashboard({ onLogout }) {
   const [expandedPayouts, setExpandedPayouts] = useState(new Set())
   const [payoutTab, setPayoutTab] = useState('pending') // 'pending' or 'processed'
   const [expandedOrders, setExpandedOrders] = useState(new Set())
+  const [processingPayoutId, setProcessingPayoutId] = useState(null)
+  const [proofData, setProofData] = useState({
+    transactionNumber: '',
+    proofText: '',
+    proofFile: null,
+    proofFilePreview: null
+  })
 
   // Fetch orders from backend
   useEffect(() => {
@@ -53,7 +60,14 @@ function AdminDashboard({ onLogout }) {
       const response = await fetch('/api/admin/payouts')
       if (response.ok) {
         const data = await response.json()
-        setPayouts(data.payouts || [])
+        // Handle both array response and object with payouts property
+        const payoutsList = Array.isArray(data) ? data : (data.payouts || [])
+        setPayouts(payoutsList)
+        console.log('Fetched payouts:', payoutsList.length)
+      } else {
+        const errorData = await response.json().catch(() => ({}))
+        console.error('Failed to fetch payouts:', errorData)
+        setPayouts([])
       }
     } catch (error) {
       console.error('Failed to fetch payouts:', error)
@@ -86,39 +100,106 @@ function AdminDashboard({ onLogout }) {
     })
   }
 
+  const handleProofFileChange = (e) => {
+    const file = e.target.files[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+        alert('Please upload an image (JPG, PNG) or PDF file')
+        return
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB')
+        return
+      }
+      
+      setProofData(prev => ({
+        ...prev,
+        proofFile: file,
+        proofFilePreview: URL.createObjectURL(file)
+      }))
+    }
+  }
+
   const processPayout = async (payoutId, status, adminNotes = '') => {
     try {
-      const response = await fetch(`/api/admin/payouts/${payoutId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, adminNotes })
+      // Convert status to action format expected by backend
+      const action = status === 'paid' ? 'approve' : 'reject'
+      
+      // Prepare form data for file upload
+      const formData = new FormData()
+      formData.append('action', action)
+      formData.append('status', status)
+      formData.append('adminNotes', adminNotes || '')
+      formData.append('transactionNumber', proofData.transactionNumber || '')
+      formData.append('proofText', proofData.proofText || '')
+      
+      if (proofData.proofFile) {
+        formData.append('proofFile', proofData.proofFile)
+      }
+      
+      console.log('Sending payout request:', {
+        payoutId,
+        action,
+        status,
+        hasFile: !!proofData.proofFile,
+        transactionNumber: proofData.transactionNumber
       })
       
+      const response = await fetch(`/api/admin/payouts/${payoutId}`, {
+        method: 'POST', // Use POST instead of PUT for FormData compatibility
+        body: formData // Use FormData instead of JSON for file upload
+      })
+      
+      const data = await response.json()
+      
       if (response.ok) {
+        // Reset proof data
+        setProofData({
+          transactionNumber: '',
+          proofText: '',
+          proofFile: null,
+          proofFilePreview: null
+        })
+        setProcessingPayoutId(null)
         fetchPayouts()
-        alert(`Payout ${status === 'paid' ? 'marked as paid' : 'updated'} successfully`)
+        alert(`Payout ${status === 'paid' ? 'marked as paid' : 'rejected'} successfully`)
       } else {
-        alert('Failed to update payout')
+        console.error('Failed to update payout:', data)
+        alert(`Failed to update payout: ${data.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Failed to process payout:', error)
-      alert('Failed to process payout')
+      alert('Failed to process payout. Please try again.')
     }
   }
 
   const updateOrderStatus = async (orderId, status) => {
     try {
-      await fetch(`/api/orders/${orderId}/status`, {
+      const response = await fetch(`/api/orders/${orderId}/status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status })
       })
-      // Update local state
-      setOrders(orders.map(o => 
-        o.id === orderId ? { ...o, status } : o
-      ))
+      
+      const data = await response.json()
+      
+      if (response.ok) {
+        // Update local state
+        setOrders(orders.map(o => 
+          o.id === orderId ? { ...o, status } : o
+        ))
+        // Refresh orders to ensure we have latest data
+        fetchOrders()
+      } else {
+        console.error('Failed to update status:', data)
+        alert(`Failed to update status: ${data.error || 'Unknown error'}`)
+      }
     } catch (error) {
       console.error('Failed to update status:', error)
+      alert('Failed to update order status. Please try again.')
     }
   }
 
@@ -856,27 +937,174 @@ function AdminDashboard({ onLogout }) {
                                 </div>
                               </div>
                               
+                              {/* Proof of Payment Section (only when marking as paid) */}
+                              {processingPayoutId === payout.id && (
+                                <div className="mt-4 pt-4 border-t border-amber-100 space-y-4">
+                                  <h4 className="font-semibold text-badge-primary">Proof of Payment</h4>
+                                  
+                                  {/* Transaction Number */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-badge-primary/70 mb-1">
+                                      Transaction Number / Reference
+                                    </label>
+                                    <input
+                                      type="text"
+                                      value={proofData.transactionNumber}
+                                      onChange={(e) => setProofData(prev => ({ ...prev, transactionNumber: e.target.value }))}
+                                      placeholder="Enter transaction number or reference"
+                                      className="w-full px-3 py-2 border border-badge-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-badge-primary/20"
+                                    />
+                                  </div>
+
+                                  {/* Bank Transfer - Text Input */}
+                                  {payout.paymentMethod === 'bank_transfer' && (
+                                    <div>
+                                      <label className="block text-sm font-medium text-badge-primary/70 mb-1">
+                                        Bank Transfer Details (UAE)
+                                      </label>
+                                      <textarea
+                                        value={proofData.proofText}
+                                        onChange={(e) => setProofData(prev => ({ ...prev, proofText: e.target.value }))}
+                                        placeholder="Paste bank transfer details, transaction info, or any relevant text..."
+                                        rows={4}
+                                        className="w-full px-3 py-2 border border-badge-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-badge-primary/20"
+                                      />
+                                    </div>
+                                  )}
+
+                                  {/* File Upload (for both PayPal and Bank) */}
+                                  <div>
+                                    <label className="block text-sm font-medium text-badge-primary/70 mb-1">
+                                      {payout.paymentMethod === 'paypal' 
+                                        ? 'PayPal Transaction Screenshot / Receipt' 
+                                        : 'Bank Transfer Screenshot / Receipt'}
+                                    </label>
+                                    <input
+                                      type="file"
+                                      accept="image/*,.pdf"
+                                      onChange={handleProofFileChange}
+                                      className="w-full px-3 py-2 border border-badge-primary/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-badge-primary/20"
+                                    />
+                                    {proofData.proofFilePreview && (
+                                      <div className="mt-2">
+                                        <p className="text-xs text-badge-primary/60 mb-1">Preview:</p>
+                                        {proofData.proofFile?.type.startsWith('image/') ? (
+                                          <img 
+                                            src={proofData.proofFilePreview} 
+                                            alt="Proof preview" 
+                                            className="max-w-xs rounded-lg border border-badge-primary/20"
+                                          />
+                                        ) : (
+                                          <div className="px-3 py-2 bg-badge-primary/5 rounded-lg">
+                                            <p className="text-sm text-badge-primary">{proofData.proofFile?.name}</p>
+                                          </div>
+                                        )}
+                                      </div>
+                                    )}
+                                    <p className="text-xs text-badge-primary/50 mt-1">
+                                      Upload screenshot, receipt, or PDF (max 5MB)
+                                    </p>
+                                  </div>
+                                </div>
+                              )}
+
                               {/* Action Buttons */}
                               <div className="flex gap-3 mt-4 pt-4 border-t border-amber-100">
-                                <button
-                                  onClick={() => processPayout(payout.id, 'paid')}
-                                  className="px-4 py-2.5 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
-                                >
-                                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                  Mark as Paid
-                                </button>
-                                <button
-                                  onClick={() => processPayout(payout.id, 'rejected', 'Rejected by admin')}
-                                  className="px-4 py-2.5 bg-red-100 text-red-600 font-medium rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center gap-2"
-                                >
-                                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                  </svg>
-                                  Reject
-                                </button>
+                                {processingPayoutId === payout.id ? (
+                                  <>
+                                    <button
+                                      onClick={() => {
+                                        if (payout.paymentMethod === 'bank_transfer' && !proofData.transactionNumber && !proofData.proofText && !proofData.proofFile) {
+                                          alert('Please provide transaction number, bank details, or upload proof of payment')
+                                          return
+                                        }
+                                        if (payout.paymentMethod === 'paypal' && !proofData.proofFile && !proofData.transactionNumber) {
+                                          alert('Please upload PayPal receipt/screenshot or enter transaction number')
+                                          return
+                                        }
+                                        processPayout(payout.id, 'paid')
+                                      }}
+                                      className="px-4 py-2.5 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                      Confirm Payment
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setProcessingPayoutId(null)
+                                        setProofData({
+                                          transactionNumber: '',
+                                          proofText: '',
+                                          proofFile: null,
+                                          proofFilePreview: null
+                                        })
+                                      }}
+                                      className="px-4 py-2.5 bg-gray-100 text-gray-600 font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </>
+                                ) : (
+                                  <>
+                                    <button
+                                      onClick={() => setProcessingPayoutId(payout.id)}
+                                      className="px-4 py-2.5 bg-green-500 text-white font-medium rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                      </svg>
+                                      Mark as Paid
+                                    </button>
+                                    <button
+                                      onClick={() => processPayout(payout.id, 'rejected', 'Rejected by admin')}
+                                      className="px-4 py-2.5 bg-red-100 text-red-600 font-medium rounded-lg hover:bg-red-200 transition-colors flex items-center justify-center gap-2"
+                                    >
+                                      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                      </svg>
+                                      Reject
+                                    </button>
+                                  </>
+                                )}
                               </div>
+                              
+                              {/* Display existing proof of payment if available */}
+                              {payout.proofOfPayment && payout.status === 'paid' && (
+                                <div className="mt-4 pt-4 border-t border-green-200">
+                                  <h4 className="font-semibold text-badge-primary mb-2">Proof of Payment</h4>
+                                  {payout.proofOfPayment.transactionNumber && (
+                                    <p className="text-sm text-badge-primary/70 mb-2">
+                                      <span className="font-medium">Transaction Number:</span> {payout.proofOfPayment.transactionNumber}
+                                    </p>
+                                  )}
+                                  {payout.proofOfPayment.text && (
+                                    <div className="mb-2">
+                                      <p className="text-sm font-medium text-badge-primary/70 mb-1">Bank Details:</p>
+                                      <p className="text-sm text-badge-primary/60 bg-white/50 p-2 rounded whitespace-pre-wrap">
+                                        {payout.proofOfPayment.text}
+                                      </p>
+                                    </div>
+                                  )}
+                                  {payout.proofOfPayment.filePath && (
+                                    <div>
+                                      <p className="text-sm font-medium text-badge-primary/70 mb-1">Uploaded File:</p>
+                                      <a
+                                        href={payout.proofOfPayment.filePath}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-sm text-badge-secondary hover:underline flex items-center gap-1"
+                                      >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                        </svg>
+                                        {payout.proofOfPayment.fileName || 'View Proof'}
+                                      </a>
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>
@@ -970,6 +1198,43 @@ function AdminDashboard({ onLogout }) {
                               )}
                             </div>
                           </div>
+                          
+                          {/* Proof of Payment Display */}
+                          {payout.proofOfPayment && payout.status === 'paid' && (
+                            <div className="mt-4 pt-4 border-t border-green-200">
+                              <h4 className="font-semibold text-badge-primary mb-2">📄 Proof of Payment</h4>
+                              {payout.proofOfPayment.transactionNumber && (
+                                <p className="text-sm text-badge-primary/70 mb-2">
+                                  <span className="font-medium">Transaction Number:</span> {payout.proofOfPayment.transactionNumber}
+                                </p>
+                              )}
+                              {payout.proofOfPayment.text && (
+                                <div className="mb-2">
+                                  <p className="text-sm font-medium text-badge-primary/70 mb-1">Bank Details:</p>
+                                  <p className="text-sm text-badge-primary/60 bg-white/50 p-2 rounded whitespace-pre-wrap">
+                                    {payout.proofOfPayment.text}
+                                  </p>
+                                </div>
+                              )}
+                              {payout.proofOfPayment.filePath && (
+                                <div>
+                                  <p className="text-sm font-medium text-badge-primary/70 mb-1">Uploaded File:</p>
+                                  <a
+                                    href={payout.proofOfPayment.filePath}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-badge-secondary hover:underline flex items-center gap-1"
+                                  >
+                                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                    </svg>
+                                    {payout.proofOfPayment.fileName || 'View Proof'}
+                                  </a>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          
                           {payout.adminNotes && (
                             <div className="mt-3 pt-3 border-t border-badge-primary/10">
                               <p className="text-xs text-badge-primary/50">Admin Notes: {payout.adminNotes}</p>
