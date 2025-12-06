@@ -14,6 +14,8 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
   const [payoutDetails, setPayoutDetails] = useState({ paypalEmail: '', bankName: '', iban: '' })
   const [payoutLoading, setPayoutLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const itemsPerPage = 5
 
   const fetchDashboard = useCallback(async () => {
     try {
@@ -45,8 +47,11 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
         if (data.error === 'Referrer not found' || response.status === 404) {
           localStorage.removeItem('referrer_data')
           localStorage.removeItem('referrer_id')
-          // Show a more helpful error message - user needs to register first
-          throw new Error('Account not found in database. Please register first before logging in.')
+          // Logout and redirect to login
+          setTimeout(() => {
+            if (onLogout) onLogout()
+          }, 2000)
+          throw new Error('Your session has expired. Redirecting to login...')
         }
         throw new Error(data.error || 'Failed to load dashboard')
       }
@@ -72,10 +77,12 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
           ...data.stats
         },
         recentConversions: data.recentConversions || [],
+        referredOrders: data.referredOrders || data.recentConversions || [],
         payouts: data.payouts || []
       }
       
       setDashboard(safeData)
+      setCurrentPage(1) // Reset to first page when data changes
     } catch (err) {
       console.error('Error fetching dashboard:', err)
       setError(err.message)
@@ -359,43 +366,137 @@ function ReferrerDashboard({ referrer, onLogout, onBack }) {
             Recent Conversions
           </h2>
 
-          {(dashboard?.recentConversions || []).length > 0 ? (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="text-left text-sm text-badge-primary/60 border-b border-badge-primary/10">
-                    <th className="pb-2">Order ID</th>
-                    <th className="pb-2">Amount</th>
-                    <th className="pb-2">Commission</th>
-                    <th className="pb-2">Status</th>
-                    <th className="pb-2">Date</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {(dashboard?.recentConversions || []).slice(0, 10).map((order) => (
-                    <tr key={order.orderId} className="border-b border-badge-primary/5">
-                      <td className="py-3 font-mono text-sm">{order.orderId?.slice(-8) || 'N/A'}</td>
-                      <td className="py-3">{((order.amount || 0)).toFixed(2)} AED</td>
-                      <td className="py-3 text-badge-secondary font-medium">
-                        +{((order.commission || 0)).toFixed(2)} AED
-                      </td>
-                      <td className="py-3">
-                        <span className={`px-2 py-0.5 rounded text-xs ${
-                          order.status === 'completed' || order.status === 'shipped'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-amber-100 text-amber-700'
-                        }`}>
-                          {order.status}
-                        </span>
-                      </td>
-                      <td className="py-3 text-sm text-badge-primary/60">
-                        {new Date(order.timestamp).toLocaleDateString()}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          {((dashboard?.referredOrders || dashboard?.recentConversions || []).length > 0) ? (
+            <>
+              {/* Calculate Pagination */}
+              {(() => {
+                const orders = dashboard?.referredOrders || dashboard?.recentConversions || []
+                const totalPages = Math.ceil(orders.length / itemsPerPage)
+                const startIndex = (currentPage - 1) * itemsPerPage
+                const endIndex = startIndex + itemsPerPage
+                const paginatedOrders = orders.slice(startIndex, endIndex)
+
+                return (
+                  <>
+                    {/* Desktop Table View */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full">
+                        <thead>
+                          <tr className="text-left text-sm text-badge-primary/60 border-b border-badge-primary/10">
+                            <th className="pb-2">Order ID</th>
+                            <th className="pb-2">Amount</th>
+                            <th className="pb-2">Commission</th>
+                            <th className="pb-2">Status</th>
+                            <th className="pb-2">Date</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paginatedOrders.map((order) => (
+                            <tr key={order.orderId} className="border-b border-badge-primary/5">
+                              <td className="py-3 font-mono text-sm">{order.orderId?.slice(-8) || 'N/A'}</td>
+                              <td className="py-3">{((order.amount || 0)).toFixed(2)} AED</td>
+                              <td className="py-3 text-badge-secondary font-medium">
+                                +{((order.commission || 0)).toFixed(2)} AED
+                              </td>
+                              <td className="py-3">
+                                <span className={`px-2 py-0.5 rounded text-xs ${
+                                  order.status === 'completed' || order.status === 'shipped'
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-amber-100 text-amber-700'
+                                }`}>
+                                  {order.status}
+                                </span>
+                              </td>
+                              <td className="py-3 text-sm text-badge-primary/60">
+                                {new Date(order.timestamp).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+
+                    {/* Mobile Card View */}
+                    <div className="md:hidden space-y-3">
+                      {paginatedOrders.map((order) => (
+                        <div key={order.orderId} className="p-4 bg-badge-primary/5 rounded-xl border border-badge-primary/10">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <p className="font-mono text-sm font-medium text-badge-primary">
+                                #{order.orderId?.slice(-8) || 'N/A'}
+                              </p>
+                              <p className="text-xs text-badge-primary/50 mt-1">
+                                {order.timestamp ? new Date(order.timestamp).toLocaleDateString() : 'N/A'}
+                              </p>
+                            </div>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${
+                              order.status === 'completed' || order.status === 'shipped'
+                                ? 'bg-green-100 text-green-700'
+                                : 'bg-amber-100 text-amber-700'
+                            }`}>
+                              {order.status || 'pending'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between pt-2 border-t border-badge-primary/10">
+                            <div>
+                              <p className="text-xs text-badge-primary/60">Order Amount</p>
+                              <p className="font-medium text-badge-primary">{((order.amount || 0)).toFixed(2)} AED</p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-xs text-badge-primary/60">Commission</p>
+                              <p className="font-medium text-badge-secondary">+{((order.commission || 0)).toFixed(2)} AED</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Pagination Controls */}
+                    {totalPages > 1 && (
+                      <div className="flex items-center justify-between mt-4 pt-4 border-t border-badge-primary/10">
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                          disabled={currentPage === 1}
+                          className="px-4 py-2 rounded-lg border border-badge-primary/20 text-badge-primary hover:bg-badge-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                        >
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                          </svg>
+                          Previous
+                        </button>
+                        
+                        <div className="flex items-center gap-2">
+                          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                            <button
+                              key={page}
+                              onClick={() => setCurrentPage(page)}
+                              className={`w-8 h-8 rounded-lg text-sm font-medium transition-colors ${
+                                currentPage === page
+                                  ? 'bg-badge-primary text-white'
+                                  : 'border border-badge-primary/20 text-badge-primary hover:bg-badge-primary/10'
+                              }`}
+                            >
+                              {page}
+                            </button>
+                          ))}
+                        </div>
+                        
+                        <button
+                          onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                          disabled={currentPage === totalPages}
+                          className="px-4 py-2 rounded-lg border border-badge-primary/20 text-badge-primary hover:bg-badge-primary/10 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                        >
+                          Next
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )
+              })()}
+            </>
           ) : (
             <p className="text-badge-primary/50 text-sm text-center py-4">
               No conversions yet. Share your link to start earning!

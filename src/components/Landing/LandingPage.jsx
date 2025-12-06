@@ -74,36 +74,40 @@ function LandingPage({ onGetStarted, onTrackOrder, onTerms, onPrivacy, onFAQ, on
       <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-badge-primary/10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center gap-2">
-              <img src="/images/ds_logo.png" alt="Daisy & Son Co." className="h-12 w-auto" />
-              <h1 className="font-display text-2xl font-bold text-gradient">Daisy & Son Co.</h1>
+            <div className="flex items-center gap-2 min-w-0 flex-shrink-0">
+              <img src="/images/ds_logo.png" alt="Daisy & Son Co." className="h-10 sm:h-12 w-auto flex-shrink-0" />
+              <h1 className="sm:block font-display text-xl sm:text-2xl font-bold text-gradient whitespace-nowrap">
+                Daisy & Son Co.
+              </h1>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 sm:gap-3 flex-shrink-0">
               <button 
                 onClick={onTrackOrder}
-                className="text-sm text-badge-primary/70 hover:text-badge-primary transition-colors flex items-center gap-1"
+                className="text-sm text-badge-primary/70 hover:text-badge-primary transition-colors flex items-center gap-1 px-2 sm:px-0"
+                title="Track Order"
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className="w-4 h-4 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
                 </svg>
-                Track Order
+                <span className="hidden sm:inline">Track Order</span>
               </button>
               {referrerName && (
                 <button 
                   onClick={onReferrer}
-                  className="text-sm text-badge-secondary hover:text-badge-secondary/80 transition-colors flex items-center gap-1 font-medium"
+                  className="text-sm text-badge-secondary hover:text-badge-secondary/80 transition-colors flex items-center gap-1 font-medium px-2 sm:px-0"
+                  title={`Hi, ${referrerName}`}
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                   </svg>
-                  Hi, {referrerName}
+                  <span className="hidden sm:inline">Hi, {referrerName}</span>
                 </button>
               )}
               <button 
                 onClick={onGetStarted}
-                className="btn-primary text-sm py-2 px-4"
+                className="btn-primary text-xs sm:text-sm py-2 px-2 sm:px-4 whitespace-nowrap"
               >
-                Start Designing
+                <span className="sm:inline">Start Designing</span>
               </button>
             </div>
           </div>
